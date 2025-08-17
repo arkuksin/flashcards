@@ -3,7 +3,7 @@
 
 
 // ==== DATA: 200 базовых слов (RU -> IT) ====
-const WORDS = [
+const DEFAULT_WORDS = [
   // 👋 Приветствия и общение (20)
   { ru: "Привет", it: ["ciao"] },
   { ru: "Доброе утро", it: ["buongiorno"] },
@@ -226,8 +226,8 @@ const WORDS = [
 ];
 
 // ==== Темы/категории ====
-const THEMES = [
-  { key: "all", name: "Все слова", start: 0, count: WORDS.length },
+const DEFAULT_THEMES = [
+  { key: "all", name: "Все слова", start: 0, count: DEFAULT_WORDS.length },
   { key: "greetings", name: "Приветствия и общение", start: 0, count: 20 },
   { key: "family", name: "Люди и семья", start: 20, count: 20 },
   { key: "food", name: "Еда и напитки", start: 40, count: 20 },
@@ -238,7 +238,22 @@ const THEMES = [
   { key: "nature", name: "Природа и погода", start: 140, count: 20 },
   { key: "work", name: "Работа и учёба", start: 160, count: 20 },
   { key: "shopping", name: "Покупки", start: 180, count: 20 },
-];
+]; 
+
+// ==== Данные: берём из внешнего файла, если есть, иначе дефолт
+let WORDS = DEFAULT_WORDS;
+let THEMES = DEFAULT_THEMES;
+
+if (typeof window !== "undefined") {
+  if (window.WORDS && Array.isArray(window.WORDS)) WORDS = window.WORDS;
+  if (window.THEMES && Array.isArray(window.THEMES)) THEMES = window.THEMES;
+} else if (typeof require === "function") {
+  try {
+    const ds = require("./data/dataset.js");
+    if (ds && Array.isArray(ds.WORDS)) WORDS = ds.WORDS;
+    if (ds && Array.isArray(ds.THEMES)) THEMES = ds.THEMES;
+  } catch (_) { /* ignore if dataset not present in Node */ }
+}
 
 // ==== Утилиты ====
 const stripDiacritics = (s) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
