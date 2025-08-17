@@ -1,4 +1,4 @@
-// main.jsx — Полностью рабочее приложение карточек (200 слов)
+// main.js — Полностью рабочее приложение карточек (200 слов)
 // React 18 + Tailwind по CDN. Без сборки, готово для GitHub Pages.
 
 const { useEffect, useMemo, useRef, useState } = React;
