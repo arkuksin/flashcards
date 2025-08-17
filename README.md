@@ -1,45 +1,44 @@
-# Итальянские карточки — 200 слов
+# Italian Flashcards — 200 Words
 
-Одностраничное приложение для тренировки итальянских слов. По умолчанию: EN → IT, можно переключить на DE → IT или RU → IT.  
-React 18 + Tailwind через CDN, **без сборки**. Работает локально и на GitHub Pages.
+A single‑page app to practice Italian vocabulary. By default it uses English → Italian, and you can switch to German → Italian or Russian → Italian.  
+React 18 + Tailwind via CDN, no build step. Works locally and on GitHub Pages.
 
-## Запуск локально
-Откройте `index.html` в браузере.
+## Quick start
+Open `index.html` in your browser.
 
 ## GitHub Pages
-Выложите файлы в репозиторий (ветка `main`, корень). Включите Settings → Pages → Deploy from branch → `main` / root.
+Commit the files to your repository (branch `main`, at the repository root). Enable Settings → Pages → Deploy from branch → `main` / root.
 
+## Controls
+- Enter — check your answer.
+- → — go to the next card.
+- Skip — counts as an attempt and moves on.
+- Reveal — shows the correct answer and counts as an attempt.
+- Reshuffle — shuffles the deck and resets score/attempts.
+- Reset score/attempts/accuracy and restart — fully resets stats and returns to the first card of the current order.
+- Theme — choose All words or a specific theme (e.g., Greetings, Food…). The deck and stats will update for the selected theme.
+- Strict accent check (è ≠ e) — toggle to require exact accents; off by default (caffe counts as caffè).
 
-## Управление
-- Enter — проверить ответ.
-- → — следующая карточка.
-- Пропустить — засчитать попытку и перейти дальше.
-- Показать ответ — открыть правильный ответ и засчитать попытку.
-- Перемешать заново — перемешивает колоду и обнуляет очки/попытки.
-- Сбросить очки/попытки/точность и начать сначала — полностью обнуляет статистику и возвращает к первой карточке текущего порядка.
-- Тема — можно выбрать все слова или конкретную тему (например, Приветствия, Еда...). Колода и статистика обновятся под выбранную тему.
+## Data
+- Words and themes live in separate files:
+  - `data\dataset-en.js` — English → Italian (objects `{ en: string, it: string[] }`).
+  - `data\dataset-de.js` — German → Italian (objects `{ de: string, it: string[] }`).
+  - `data\dataset-ru.js` — Russian → Italian (objects `{ ru: string, it: string[] }`).
+- Format: plain JavaScript modules (work in browser and Node) that export:
+  - `WORDS`: an array of objects with the source word (en/de/ru) and Italian answers `it`.
+  - `THEMES`: an array of `{ key: string, name: string, start: number, count: number }`.
+- How to edit:
+  - Add/change words in the appropriate file. For multiple accepted answers, use the `it` array, e.g. `["caffe", "caffè"]`.
+  - Themes (`THEMES`) define windows inside `WORDS` by indexes: `start` — starting index, `count` — number of words. The `all` theme automatically spans the full array.
+- Why not JSON: the app runs directly from file:// without a dev server; browsers block fetching local JSON. A JS data file is the simplest and most editable option without build or server.
+- Language switch (EN/DE/RU) changes both the UI language and the card set (EN→IT, DE→IT, or RU→IT). English is the default.
 
+## Tests
+- Requires Node.js 16+.
+- Run (Windows): `node tests\main.test.js`
+- Run (macOS/Linux): `node tests/main.test.js`
 
-## Данные
-- Слова и темы вынесены в файлы:
-  - `data\dataset-en.js` — английский → итальянский (объекты `{ en: string, it: string[] }`).
-  - `data\dataset-de.js` — немецкий → итальянский (объекты `{ de: string, it: string[] }`).
-  - `data\dataset-ru.js` — русский → итальянский (объекты `{ ru: string, it: string[] }`).
-- Формат: обычные JavaScript‑модули (подходят для браузера и Node), экспортируют структуры:
-  - `WORDS`: массив объектов с исходным словом (en/de/ru) и ответами `it`.
-  - `THEMES`: массив объектов `{ key: string, name: string, start: number, count: number }`.
-- Как редактировать:
-  - Добавляйте/меняйте слова в соответствующем файле. Для нескольких допустимых ответов укажите массив `it`, например `["caffe", "caffè"]`.
-  - Темы (`THEMES`) задают «окна» внутри `WORDS` по индексам: `start` — начальный индекс, `count` — количество слов. Тема `all` автоматически покрывает весь массив.
-- Почему не JSON: приложение работает напрямую из файла (file://). Браузеры не разрешают fetch JSON без сервера. JS‑файл с данными — самый простой, привычный и редактируемый вариант без сборки и сервера.
-- Переключение языка (EN/DE/RU) меняет и набор карточек (EN→IT, DE→IT или RU→IT), и язык интерфейса.
-
-## Тесты
-- Требуется Node.js 16+.
-- Запуск (Windows): node tests\main.test.js
-- Запуск (macOS/Linux): node tests/main.test.js
-
-
-## Примечание
-- Приложение использует данные из файлов `data\dataset-en.js`, `data\dataset-de.js` и `data\dataset-ru.js`. В браузере подключаются все доступные файлы; по умолчанию используется английский набор (EN→IT), можно переключаться (EN↔DE↔RU). Для юнит‑тестов в Node используется русский набор (`dataset-ru.js`).
-- Если в выбранном наборе не задан массив `THEMES`, приложение автоматически создаёт тему `all`, которая охватывает весь список `WORDS`.
+## Notes
+- In the browser, all available datasets are included; the English set (EN→IT) is used by default, and you can switch (EN ↔ DE ↔ RU).
+- Unit tests in Node use the Russian dataset (`dataset-ru.js`).
+- If a chosen dataset doesn’t define `THEMES`, the app automatically creates the `all` theme that covers the entire `WORDS` list.
