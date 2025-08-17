@@ -225,6 +225,21 @@ const WORDS = [
   { ru: "Примерочная", it: ["camerino", "spogliatoio"] },
 ];
 
+// ==== Темы/категории ====
+const THEMES = [
+  { key: "all", name: "Все слова", start: 0, count: WORDS.length },
+  { key: "greetings", name: "Приветствия и общение", start: 0, count: 20 },
+  { key: "family", name: "Люди и семья", start: 20, count: 20 },
+  { key: "food", name: "Еда и напитки", start: 40, count: 20 },
+  { key: "transport", name: "Транспорт и дорога", start: 60, count: 20 },
+  { key: "numbers", name: "Числа", start: 80, count: 20 },
+  { key: "colors", name: "Цвета", start: 100, count: 20 },
+  { key: "home", name: "Дом и вещи", start: 120, count: 20 },
+  { key: "nature", name: "Природа и погода", start: 140, count: 20 },
+  { key: "work", name: "Работа и учёба", start: 160, count: 20 },
+  { key: "shopping", name: "Покупки", start: 180, count: 20 },
+];
+
 // ==== Утилиты ====
 const stripDiacritics = (s) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 const normalize = (s) =>
@@ -243,7 +258,16 @@ function shuffle(array) {
 }
 
 function App() {
-  const [order, setOrder] = React.useState(() => shuffle([...Array(WORDS.length).keys()]));
+  const [themeKey, setThemeKey] = React.useState("all");
+  const poolIndices = React.useMemo(() => {
+    const t = THEMES.find((t) => t.key === themeKey) || THEMES[0];
+    if (t.key === "all") return [...Array(WORDS.length).keys()];
+    const arr = [];
+    for (let i = t.start; i < t.start + t.count; i++) arr.push(i);
+    return arr;
+  }, [themeKey]);
+
+  const [order, setOrder] = React.useState(() => shuffle(poolIndices));
   const [idx, setIdx] = React.useState(0);
   const [input, setInput] = React.useState("");
   const [checked, setChecked] = React.useState(false);
@@ -256,6 +280,18 @@ function App() {
   const inputRef = React.useRef(null);
 
   React.useEffect(() => { inputRef.current?.focus(); }, [idx]);
+
+  // Reset deck and stats when theme changes
+  React.useEffect(() => {
+    setOrder(shuffle(poolIndices));
+    setIdx(0);
+    setInput("");
+    setChecked(false);
+    setIsCorrect(false);
+    setPoints(0);
+    setAttempts(0);
+    inputRef.current?.focus();
+  }, [poolIndices]);
 
   const acceptedAnswers = React.useMemo(() => {
     const raw = current.it.flatMap((ans) => String(ans).split(/[\/|,]/).map((s) => s.trim()).filter(Boolean));
@@ -274,14 +310,14 @@ function App() {
 
   function nextCard() {
     const next = idx + 1;
-    if (next >= order.length) { setOrder(shuffle([...Array(WORDS.length).keys()])); setIdx(0); }
+    if (next >= order.length) { setOrder(shuffle(poolIndices)); setIdx(0); }
     else { setIdx(next); }
     setInput(""); setChecked(false); setIsCorrect(false); inputRef.current?.focus();
   }
 
   const skipCard = () => { setAttempts((a) => a + 1); nextCard(); };
   const reveal = () => { setInput(acceptedAnswers[0] || ""); setChecked(true); setIsCorrect(false); setAttempts((a) => a + 1); };
-  const reshuffle = () => { setOrder(shuffle([...Array(WORDS.length).keys()])); setIdx(0); setInput(""); setChecked(false); setIsCorrect(false); setPoints(0); setAttempts(0); };
+  const reshuffle = () => { setOrder(shuffle(poolIndices)); setIdx(0); setInput(""); setChecked(false); setIsCorrect(false); setPoints(0); setAttempts(0); };
   const resetStats = () => { setIdx(0); setInput(""); setChecked(false); setIsCorrect(false); setPoints(0); setAttempts(0); inputRef.current?.focus(); };
 
   function onCardClick() {
@@ -303,7 +339,19 @@ function App() {
         React.createElement("header", { className: "mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between" },
           React.createElement("div", null,
             React.createElement("h1", { className: "text-2xl sm:text-3xl font-bold tracking-tight" }, "Итальянские карточки — 200 слов"),
-            React.createElement("p", { className: "text-sm text-slate-600" }, "Введи перевод на итальянский и кликни по карточке. Enter — проверить, повторный клик — следующая.")
+            React.createElement("p", { className: "text-sm text-slate-600" }, "Введи перевод на итальянский и кликни по карточке. Enter — проверить, повторный клик — следующая."),
+            React.createElement("div", { className: "mt-2 flex items-center gap-2" },
+              React.createElement("label", { className: "text-xs text-slate-600" }, "Тема:"),
+              React.createElement(
+                "select",
+                {
+                  value: themeKey,
+                  onChange: (e) => setThemeKey(e.target.value),
+                  className: "text-sm rounded-lg border border-slate-300 px-2 py-1 bg-white"
+                },
+                THEMES.map((t) => React.createElement("option", { key: t.key, value: t.key }, t.name))
+              )
+            )
           ),
           React.createElement("div", { className: "flex gap-3 text-sm" },
             React.createElement("div", { className: "bg-white rounded-xl shadow px-3 py-2" }, "Очки: ", React.createElement("b", null, points)),
@@ -353,7 +401,7 @@ function App() {
               React.createElement("label", { htmlFor: "strict", className: "select-none cursor-pointer" }, "Строгая проверка акцентов (è ≠ e)")
             )
           ),
-          React.createElement("div", { className: "text-center text-sm text-slate-600" }, `Карточка ${idx + 1} из ${WORDS.length}`)
+          React.createElement("div", { className: "text-center text-sm text-slate-600" }, `Карточка ${idx + 1} из ${order.length}`)
         ),
         React.createElement("footer", { className: "mt-8 text-xs text-slate-500" },
           "Советы: 1) Enter — проверить, → — следующая. 2) Клик по карточке также проверяет/листает. 3) По умолчанию акценты не обязательны (caffe засчитывается как caffè)."
@@ -370,5 +418,5 @@ if (typeof document !== "undefined" && typeof ReactDOM !== "undefined") {
 
 // Export pure utilities and data for Node.js tests
 if (typeof module !== "undefined" && module.exports) {
-  module.exports = { WORDS, stripDiacritics, normalize, shuffle };
+  module.exports = { WORDS, THEMES, stripDiacritics, normalize, shuffle };
 }
