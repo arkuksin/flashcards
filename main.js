@@ -1,7 +1,6 @@
 // main.js — Полностью рабочее приложение карточек (200 слов)
 // React 18 + Tailwind по CDN. Без сборки, готово для GitHub Pages.
 
-const { useEffect, useMemo, useRef, useState } = React;
 
 // ==== DATA: 200 базовых слов (RU -> IT) ====
 const WORDS = [
@@ -147,7 +146,7 @@ const WORDS = [
   { ru: "Дверь", it: ["porta"] },
   { ru: "Окно", it: ["finestra"] },
   { ru: "Кухня", it: ["cucina"] },
-  { ru: "Ванная", it: ["дagно".replace("д","b")] }, // ensure 'bagno'
+  { ru: "Ванная", it: ["bagno"] }, // ensure 'bagno'
   { ru: "Телевизор", it: ["televisore", "tv"] },
   { ru: "Холодильник", it: ["frigorifero"] },
   { ru: "Плита", it: ["fornello", "forno"] },
@@ -364,5 +363,12 @@ function App() {
   );
 }
 
-const root = ReactDOM.createRoot(document.getElementById("root"));
-root.render(React.createElement(App));
+if (typeof document !== "undefined" && typeof ReactDOM !== "undefined") {
+  const root = ReactDOM.createRoot(document.getElementById("root"));
+  root.render(React.createElement(App));
+}
+
+// Export pure utilities and data for Node.js tests
+if (typeof module !== "undefined" && module.exports) {
+  module.exports = { WORDS, stripDiacritics, normalize, shuffle };
+}
