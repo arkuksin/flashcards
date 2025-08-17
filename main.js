@@ -283,6 +283,7 @@ function App() {
   const skipCard = () => { setAttempts((a) => a + 1); nextCard(); };
   const reveal = () => { setInput(acceptedAnswers[0] || ""); setChecked(true); setIsCorrect(false); setAttempts((a) => a + 1); };
   const reshuffle = () => { setOrder(shuffle([...Array(WORDS.length).keys()])); setIdx(0); setInput(""); setChecked(false); setIsCorrect(false); setPoints(0); setAttempts(0); };
+  const resetStats = () => { setIdx(0); setInput(""); setChecked(false); setIsCorrect(false); setPoints(0); setAttempts(0); inputRef.current?.focus(); };
 
   function onCardClick() {
     if (!checked) { if (!input.trim()) return inputRef.current?.focus(); checkAnswer(); }
@@ -345,7 +346,8 @@ function App() {
               React.createElement("button", { onClick: nextCard, className: "px-4 py-2 rounded-xl bg-slate-800 text-white hover:bg-slate-900 active:translate-y-px" }, "Дальше (→)"),
               React.createElement("button", { onClick: skipCard, className: "px-4 py-2 rounded-xl bg-amber-500 text-white hover:bg-amber-600 active:translate-y-px" }, "Пропустить"),
               React.createElement("button", { onClick: reveal, className: "px-4 py-2 rounded-xl bg-rose-500 text-white hover:bg-rose-600 active:translate-y-px" }, "Показать ответ"),
-              React.createElement("button", { onClick: reshuffle, className: "px-4 py-2 rounded-xl bg-green-600 text-white hover:bg-green-700 active:translate-y-px" }, "Перемешать заново")
+              React.createElement("button", { onClick: reshuffle, className: "px-4 py-2 rounded-xl bg-green-600 text-white hover:bg-green-700 active:translate-y-px" }, "Перемешать заново"),
+              React.createElement("button", { onClick: resetStats, className: "px-4 py-2 rounded-xl bg-slate-200 text-slate-800 hover:bg-slate-300 active:translate-y-px" }, "Сбросить очки/попытки/точность и начать сначала")
             ),
             React.createElement("div", { className: "mt-4 flex items-center gap-2 text-sm" },
               React.createElement("input", { id: "strict", type: "checkbox", checked: strictAccents, onChange: (e) => setStrictAccents(e.target.checked), className: "h-4 w-4" }),
