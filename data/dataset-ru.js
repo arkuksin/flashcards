@@ -187,7 +187,7 @@
     { ru: "Тетрадь", it: ["quaderno"] },
     { ru: "Ручка", it: ["penna"] },
     { ru: "Компьютер", it: ["computer", "pc"] },
-    { ru: "Учитель", it: ["insegnante", "professore", "professoressa"] },
+    { ru: "Учитель", it: ["insegnante", "профессore", "professoressa"] },
     { ru: "Студент", it: ["studente", "studentessa"] },
     { ru: "Коллега", it: ["collega"] },
     { ru: "Босс", it: ["capo"] },
@@ -240,7 +240,6 @@
   if (typeof module !== 'undefined' && module.exports) {
     module.exports = { WORDS, THEMES };
   } else {
-    global.WORDS = WORDS;
-    global.THEMES = THEMES;
+    global.DATASET_RU = { WORDS, THEMES };
   }
 })(typeof window !== 'undefined' ? window : globalThis);
