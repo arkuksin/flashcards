@@ -2,17 +2,19 @@
 // React 18 + Tailwind via CDN. No build; ready for GitHub Pages.
 
 
-// ==== Data: RU/DE datasets (browser) and RU for Node tests ====
+// ==== Data: EN default dataset (browser), optional RU/DE; RU used for Node tests ====
 let WORDS; // Node export (RU)
 let THEMES; // Node export (RU)
+let DS_EN;
 let DS_RU;
 let DS_DE;
 
 if (typeof window !== "undefined") {
-  if (!window.DATASET_RU || !Array.isArray(window.DATASET_RU.WORDS)) {
-    throw new Error("RU dataset not found. Include data\\dataset-ru.js before main.js");
+  if (!window.DATASET_EN || !Array.isArray(window.DATASET_EN.WORDS)) {
+    throw new Error("EN dataset not found. Include data\\dataset-en.js before main.js");
   }
-  DS_RU = window.DATASET_RU;
+  DS_EN = window.DATASET_EN;
+  DS_RU = (window.DATASET_RU && Array.isArray(window.DATASET_RU.WORDS)) ? window.DATASET_RU : null;
   DS_DE = (window.DATASET_DE && Array.isArray(window.DATASET_DE.WORDS)) ? window.DATASET_DE : null;
 } else if (typeof require === "function") {
   const ds = require("./data/dataset-ru.js");
@@ -42,8 +44,35 @@ function shuffle(array) {
   return a;
 }
 
-// ==== I18N strings for RU and DE UI ====
+// ==== I18N strings for RU, DE and EN UI ====
 const I18N = {
+  en: {
+    title: "Italian Flashcards — 200 Words",
+    subtitle: "Type the Italian translation and click the card. Enter — check, click again — next.",
+    langLabel: "Language:",
+    themeLabel: "Theme:",
+    scoreLabel: "Score: ",
+    attemptsLabel: "Attempts: ",
+    accuracyLabel: "Accuracy: ",
+    sourceLabel: "English word",
+    clickHintUnchecked: "Click to check.",
+    clickHintChecked: "Click to go next.",
+    correct: "Correct! ✅",
+    correctAnswerLabel: "Correct answer: ",
+    alsoAcceptedPrefix: " (also accepted: ",
+    alsoAcceptedSuffix: ")",
+    inputLabel: "Enter the Italian translation",
+    placeholder: "e.g.: ciao",
+    btnCheck: "Check (Enter)",
+    btnNext: "Next (→)",
+    btnSkip: "Skip",
+    btnReveal: "Reveal",
+    btnReshuffle: "Reshuffle",
+    btnReset: "Reset score/attempts/accuracy and restart",
+    strictLabel: "Strict accent check (è ≠ e)",
+    counter: (i, n) => `Card ${i} of ${n}`,
+    tips: "Tips: 1) Enter — check, → — next. 2) Clicking the card also checks/advances. 3) Accents are optional by default (caffe counts as caffè)."
+  },
   ru: {
     title: "Итальянские карточки — 200 слов",
     subtitle: "Введи перевод на итальянский и кликни по карточке. Enter — проверить, повторный клик — следующая.",
@@ -101,11 +130,17 @@ const I18N = {
 };
 
 function App() {
-  const [lang, setLang] = React.useState("ru");
-  const t = I18N[lang] || I18N.ru;
-  const DATA = React.useMemo(() => (lang === "de" && DS_DE ? DS_DE : DS_RU), [lang]);
+  const [lang, setLang] = React.useState("en");
+  const t = I18N[lang] || I18N.en;
+  const DATA = React.useMemo(() => {
+    if (lang === "en" && DS_EN) return DS_EN;
+    if (lang === "de" && DS_DE) return DS_DE;
+    if (lang === "ru" && DS_RU) return DS_RU;
+    // fallback order: EN -> DE -> RU (whichever exists)
+    return DS_EN || DS_DE || DS_RU;
+  }, [lang]);
   const WORDS_LOCAL = DATA.WORDS;
-  const THEMES_LOCAL = Array.isArray(DATA.THEMES) ? DATA.THEMES : [{ key: "all", name: lang === "ru" ? "Все слова" : "Alle Wörter", start: 0, count: WORDS_LOCAL.length }];
+  const THEMES_LOCAL = Array.isArray(DATA.THEMES) ? DATA.THEMES : [{ key: "all", name: (lang === "ru" ? "Все слова" : (lang === "de" ? "Alle Wörter" : "All words")), start: 0, count: WORDS_LOCAL.length }];
   React.useEffect(() => { if (typeof document !== "undefined") { document.title = t.title; document.documentElement.lang = lang; } }, [lang, t.title]);
   const [themeKey, setThemeKey] = React.useState("all");
   React.useEffect(() => { setThemeKey("all"); }, [lang]);
@@ -143,7 +178,7 @@ function App() {
     inputRef.current?.focus();
   }, [poolIndices]);
 
-  const sourceWord = lang === "de" ? current.de : current.ru;
+  const sourceWord = (current && (current[lang] || current.en || current.de || current.ru)) || "";
   const acceptedAnswers = React.useMemo(() => {
     const raw = current.it.flatMap((ans) => String(ans).split(/[\/|,]/).map((s) => s.trim()).filter(Boolean));
     return Array.from(new Set(raw));
@@ -201,8 +236,9 @@ function App() {
                   className: "text-sm rounded-lg border border-slate-300 px-2 py-1 bg-white"
                 },
                 [
-                  React.createElement("option", { key: "ru", value: "ru" }, "RU → IT"),
-                  DS_DE && React.createElement("option", { key: "de", value: "de" }, "DE → IT")
+                  React.createElement("option", { key: "en", value: "en" }, "EN → IT"),
+                  DS_DE && React.createElement("option", { key: "de", value: "de" }, "DE → IT"),
+                  DS_RU && React.createElement("option", { key: "ru", value: "ru" }, "RU → IT")
                 ].filter(Boolean)
               ),
               React.createElement("label", { className: "text-xs text-slate-600" }, t.themeLabel),
