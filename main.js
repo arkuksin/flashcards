@@ -8,6 +8,7 @@ let THEMES; // Node export (RU)
 let DS_EN;
 let DS_RU;
 let DS_DE;
+let DS_FR;
 
 if (typeof window !== "undefined") {
   if (!window.DATASET_EN || !Array.isArray(window.DATASET_EN.WORDS)) {
@@ -16,6 +17,7 @@ if (typeof window !== "undefined") {
   DS_EN = window.DATASET_EN;
   DS_RU = (window.DATASET_RU && Array.isArray(window.DATASET_RU.WORDS)) ? window.DATASET_RU : null;
   DS_DE = (window.DATASET_DE && Array.isArray(window.DATASET_DE.WORDS)) ? window.DATASET_DE : null;
+  DS_FR = (window.DATASET_FR && Array.isArray(window.DATASET_FR.WORDS)) ? window.DATASET_FR : null;
 } else if (typeof require === "function") {
   const ds = require("./data/dataset-ru.js");
   if (!ds || !Array.isArray(ds.WORDS)) {
@@ -44,10 +46,10 @@ function shuffle(array) {
   return a;
 }
 
-// ==== I18N strings for RU, DE and EN UI ====
+// ==== I18N strings for EN, RU, DE, FR UI ====
 const I18N = {
   en: {
-    title: "Italian Flashcards — 200 Words",
+    title: "Italian Flashcards — 300 Words",
     subtitle: "Type the Italian translation and click the card. Enter — check, click again — next.",
     langLabel: "Language:",
     themeLabel: "Theme:",
@@ -74,7 +76,7 @@ const I18N = {
     tips: "Tips: 1) Enter — check, → — next. 2) Clicking the card also checks/advances. 3) Accents are optional by default (caffe counts as caffè)."
   },
   ru: {
-    title: "Итальянские карточки — 200 слов",
+    title: "Итальянские карточки — 300 слов",
     subtitle: "Введи перевод на итальянский и кликни по карточке. Enter — проверить, повторный клик — следующая.",
     langLabel: "Язык:",
     themeLabel: "Тема:",
@@ -101,7 +103,7 @@ const I18N = {
     tips: "Советы: 1) Enter — проверить, → — следующая. 2) Клик по карточке также проверяет/листает. 3) По умолчанию акценты не обязательны (caffe засчитывается как caffè)."
   },
   de: {
-    title: "Italienische Karten — 200 Wörter",
+    title: "Italienische Karten — 300 Wörter",
     subtitle: "Gib die italienische Übersetzung ein und klicke auf die Karte. Enter — prüfen, erneuter Klick — nächste.",
     langLabel: "Sprache:",
     themeLabel: "Thema:",
@@ -126,6 +128,33 @@ const I18N = {
     strictLabel: "Strenge Akzentprüfung (è ≠ e)",
     counter: (i, n) => `Karte ${i} von ${n}`,
     tips: "Tipps: 1) Enter — prüfen, → — nächste. 2) Klick auf die Karte prüft/blättert. 3) Standardmäßig sind Akzente optional (caffe zählt als caffè)."
+  },
+  fr: {
+    title: "Cartes italiennes — 300 mots",
+    subtitle: "Tapez la traduction italienne et cliquez sur la carte. Entrée — vérifier, cliquer encore — suivant.",
+    langLabel: "Langue :",
+    themeLabel: "Thème :",
+    scoreLabel: "Score : ",
+    attemptsLabel: "Essais : ",
+    accuracyLabel: "Précision : ",
+    sourceLabel: "Mot français",
+    clickHintUnchecked: "Cliquez pour vérifier.",
+    clickHintChecked: "Cliquez pour continuer.",
+    correct: "Correct ! ✅",
+    correctAnswerLabel: "Bonne réponse : ",
+    alsoAcceptedPrefix: " (aussi accepté : ",
+    alsoAcceptedSuffix: ")",
+    inputLabel: "Entrez la traduction italienne",
+    placeholder: "par ex. : ciao",
+    btnCheck: "Vérifier (Entrée)",
+    btnNext: "Suivant (→)",
+    btnSkip: "Passer",
+    btnReveal: "Révéler",
+    btnReshuffle: "Mélanger",
+    btnReset: "Réinitialiser score/essais/précision et recommencer",
+    strictLabel: "Vérification stricte des accents (è ≠ e)",
+    counter: (i, n) => `Carte ${i} sur ${n}`,
+    tips: "Astuces : 1) Entrée — vérifier, → — suivant. 2) Cliquer sur la carte vérifie/avance. 3) Par défaut, les accents sont optionnels (caffe compte comme caffè)."
   }
 };
 
@@ -136,11 +165,17 @@ function App() {
     if (lang === "en" && DS_EN) return DS_EN;
     if (lang === "de" && DS_DE) return DS_DE;
     if (lang === "ru" && DS_RU) return DS_RU;
-    // fallback order: EN -> DE -> RU (whichever exists)
-    return DS_EN || DS_DE || DS_RU;
+    if (lang === "fr" && DS_FR) return DS_FR;
+    // fallback order: EN -> DE -> RU -> FR (whichever exists)
+    return DS_EN || DS_DE || DS_RU || DS_FR;
   }, [lang]);
   const WORDS_LOCAL = DATA.WORDS;
-  const THEMES_LOCAL = Array.isArray(DATA.THEMES) ? DATA.THEMES : [{ key: "all", name: (lang === "ru" ? "Все слова" : (lang === "de" ? "Alle Wörter" : "All words")), start: 0, count: WORDS_LOCAL.length }];
+  const THEMES_LOCAL = React.useMemo(() => {
+    if (Array.isArray(DATA.THEMES)) return DATA.THEMES;
+    // Stable fallback theme when dataset doesn't provide THEMES (e.g., FR)
+    const name = (lang === "ru" ? "Все слова" : (lang === "de" ? "Alle Wörter" : (lang === "fr" ? "Tous les mots" : "All words")));
+    return [{ key: "all", name, start: 0, count: WORDS_LOCAL.length }];
+  }, [DATA.THEMES, lang, WORDS_LOCAL.length]);
   React.useEffect(() => { if (typeof document !== "undefined") { document.title = t.title; document.documentElement.lang = lang; } }, [lang, t.title]);
   const [themeKey, setThemeKey] = React.useState("all");
   React.useEffect(() => { setThemeKey("all"); }, [lang]);
@@ -178,7 +213,7 @@ function App() {
     inputRef.current?.focus();
   }, [poolIndices]);
 
-  const sourceWord = (current && (current[lang] || current.en || current.de || current.ru)) || "";
+  const sourceWord = (current && (current[lang] || current.en || current.de || current.ru || current.fr)) || "";
   const acceptedAnswers = React.useMemo(() => {
     const raw = current.it.flatMap((ans) => String(ans).split(/[\/|,]/).map((s) => s.trim()).filter(Boolean));
     return Array.from(new Set(raw));
@@ -238,7 +273,8 @@ function App() {
                 [
                   React.createElement("option", { key: "en", value: "en" }, "EN → IT"),
                   DS_DE && React.createElement("option", { key: "de", value: "de" }, "DE → IT"),
-                  DS_RU && React.createElement("option", { key: "ru", value: "ru" }, "RU → IT")
+                  DS_RU && React.createElement("option", { key: "ru", value: "ru" }, "RU → IT"),
+                  DS_FR && React.createElement("option", { key: "fr", value: "fr" }, "FR → IT")
                 ].filter(Boolean)
               ),
               React.createElement("label", { className: "text-xs text-slate-600" }, t.themeLabel),

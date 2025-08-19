@@ -43,8 +43,8 @@ test('shuffle returns a new array instance and keeps the same items', () => {
 });
 
 // WORDS dataset tests
-test('WORDS contains exactly 200 entries', () => {
-  assert.strictEqual(WORDS.length, 200);
+test('WORDS contains exactly 300 entries', () => {
+  assert.strictEqual(WORDS.length, 300);
 });
 
 test('Кофе entry accepts both caffe and caffè', () => {
