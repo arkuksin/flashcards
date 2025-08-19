@@ -25,10 +25,10 @@ jobs:
         run: npx playwright install --with-deps
 
       - name: Run Playwright tests
-        env:
-          # Override baseURL if you want to run against production
-          # BASE_URL: https://mydomain.com
         run: npx playwright test
+        # To run against production, override BASE_URL at workflow/job/step level, e.g.:
+        # env:
+        #   BASE_URL: https://mydomain.com
 
       - name: Upload Playwright report on failure
         if: failure()
