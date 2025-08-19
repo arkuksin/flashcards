@@ -158,9 +158,36 @@ const I18N = {
   }
 };
 
+const FLAG_ICONS = {
+  en: { src: "https://twemoji.maxcdn.com/v/latest/svg/1f1ec-1f1e7.svg", label: "English" },
+  de: { src: "https://twemoji.maxcdn.com/v/latest/svg/1f1e9-1f1ea.svg", label: "Deutsch" },
+  ru: { src: "https://twemoji.maxcdn.com/v/latest/svg/1f1f7-1f1fa.svg", label: "Русский" },
+  fr: { src: "https://twemoji.maxcdn.com/v/latest/svg/1f1eb-1f1f7.svg", label: "Français" }
+};
+
 function App() {
-  const [lang, setLang] = React.useState("en");
+  const detectInitialLang = () => {
+    try {
+      const saved = (typeof window !== "undefined" && window.localStorage) ? window.localStorage.getItem("lang") : null;
+      if (saved && ["en","de","ru","fr"].includes(saved)) {
+        if (saved === "de" && !DS_DE) return "en";
+        if (saved === "ru" && !DS_RU) return "en";
+        if (saved === "fr" && !DS_FR) return "en";
+        return saved;
+      }
+      const nav = (typeof navigator !== "undefined" && navigator.language) ? navigator.language.slice(0,2).toLowerCase() : "";
+      if (["en","de","ru","fr"].includes(nav)) {
+        if (nav === "de" && !DS_DE) return "en";
+        if (nav === "ru" && !DS_RU) return "en";
+        if (nav === "fr" && !DS_FR) return "en";
+        return nav;
+      }
+    } catch (e) {}
+    return "en";
+  };
+  const [lang, setLang] = React.useState(detectInitialLang);
   const t = I18N[lang] || I18N.en;
+  React.useEffect(() => { try { if (typeof window !== "undefined" && window.localStorage) { window.localStorage.setItem("lang", lang); } } catch(e) {} }, [lang]);
   const DATA = React.useMemo(() => {
     if (lang === "en" && DS_EN) return DS_EN;
     if (lang === "de" && DS_DE) return DS_DE;
@@ -257,18 +284,52 @@ function App() {
   return (
     React.createElement("div", { className: "min-h-screen bg-slate-50 text-slate-900 flex flex-col items-center py-8 px-4" },
       React.createElement("div", { className: "w-full max-w-3xl" },
-        React.createElement("header", { className: "mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between" },
+        React.createElement("header", { className: "mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between", "data-testid": "header" },
           React.createElement("div", null,
             React.createElement("h1", { className: "text-2xl sm:text-3xl font-bold tracking-tight" }, t.title),
             React.createElement("p", { className: "text-sm text-slate-600" }, t.subtitle),
             React.createElement("div", { className: "mt-2 flex flex-wrap items-center gap-3" },
               React.createElement("label", { className: "text-xs text-slate-600" }, t.langLabel),
+              // Flag buttons (extra option)
+              React.createElement(
+                "div",
+                { className: "flex items-center gap-1", "data-testid": "lang-flags" },
+                [
+                  { code: "en", available: !!DS_EN },
+                  { code: "de", available: !!DS_DE },
+                  { code: "ru", available: !!DS_RU },
+                  { code: "fr", available: !!DS_FR }
+                ]
+                  .filter((x) => x.available)
+                  .map((opt) => React.createElement(
+                    "button",
+                    {
+                      key: opt.code,
+                      type: "button",
+                      onClick: () => setLang(opt.code),
+                      className: `px-1.5 py-1 rounded-full border ${lang === opt.code ? "border-sky-500 bg-sky-50" : "border-slate-300 bg-white hover:bg-slate-50"}`,
+                      title: `${FLAG_ICONS[opt.code].label} → IT`,
+                      "aria-label": `${FLAG_ICONS[opt.code].label} → IT`,
+                      "aria-pressed": lang === opt.code,
+                      "data-testid": `flag-${opt.code}`
+                    },
+                    React.createElement("img", {
+                      src: FLAG_ICONS[opt.code].src,
+                      alt: `${FLAG_ICONS[opt.code].label} flag`,
+                      className: "h-4 w-6 object-cover rounded-sm pointer-events-none",
+                      loading: "lazy",
+                      decoding: "async"
+                    })
+                  ))
+              ),
+              // Fallback select (accessible)
               React.createElement(
                 "select",
                 {
                   value: lang,
                   onChange: (e) => setLang(e.target.value),
-                  className: "text-sm rounded-lg border border-slate-300 px-2 py-1 bg-white"
+                  className: "text-sm rounded-lg border border-slate-300 px-2 py-1 bg-white",
+                  "data-testid": "lang-select"
                 },
                 [
                   React.createElement("option", { key: "en", value: "en" }, "EN → IT"),
@@ -283,16 +344,17 @@ function App() {
                 {
                   value: themeKey,
                   onChange: (e) => setThemeKey(e.target.value),
-                  className: "text-sm rounded-lg border border-slate-300 px-2 py-1 bg-white"
+                  className: "text-sm rounded-lg border border-slate-300 px-2 py-1 bg-white",
+                  "data-testid": "theme-select"
                 },
                 THEMES_LOCAL.map((th) => React.createElement("option", { key: th.key, value: th.key }, th.name))
               )
             )
           ),
           React.createElement("div", { className: "flex gap-3 text-sm" },
-            React.createElement("div", { className: "bg-white rounded-xl shadow px-3 py-2" }, t.scoreLabel, React.createElement("b", null, points)),
-            React.createElement("div", { className: "bg-white rounded-xl shadow px-3 py-2" }, t.attemptsLabel, React.createElement("b", null, attempts)),
-            React.createElement("div", { className: "bg-white rounded-xl shadow px-3 py-2" }, t.accuracyLabel, React.createElement("b", null, accuracy), "%")
+            React.createElement("div", { className: "bg-white rounded-xl shadow px-3 py-2", "data-testid": "score", "data-value": String(points) }, t.scoreLabel, React.createElement("b", null, points)),
+            React.createElement("div", { className: "bg-white rounded-xl shadow px-3 py-2", "data-testid": "attempts", "data-value": String(attempts) }, t.attemptsLabel, React.createElement("b", null, attempts)),
+            React.createElement("div", { className: "bg-white rounded-xl shadow px-3 py-2", "data-testid": "accuracy", "data-value": String(accuracy) }, t.accuracyLabel, React.createElement("b", null, accuracy), "%")
           )
         ),
         React.createElement("main", { className: "flex flex-col gap-4" },
@@ -301,16 +363,19 @@ function App() {
               checked ? (isCorrect ? "bg-green-50 border-green-300" : "bg-rose-50 border-rose-300")
                       : "bg-white border-slate-200 hover:shadow-xl"
             }`,
-            onClick: onCardClick, role: "button", tabIndex: 0, onKeyDown: (e) => e.key === "Enter" && onCardClick()
+            onClick: onCardClick, role: "button", tabIndex: 0, onKeyDown: (e) => e.key === "Enter" && onCardClick(),
+            "data-testid": "card",
+            "data-checked": checked ? "true" : "false",
+            "data-correct": checked ? (isCorrect ? "true" : "false") : "false"
           },
             React.createElement("div", { className: "text-slate-500 text-xs uppercase tracking-widest mb-2" }, t.sourceLabel),
-            React.createElement("div", { className: "text-3xl sm:text-4xl font-semibold" }, sourceWord),
+            React.createElement("div", { className: "text-3xl sm:text-4xl font-semibold", "data-testid": "source-word" }, sourceWord),
             React.createElement("div", { className: "mt-4 text-slate-500 text-sm" }, checked ? t.clickHintChecked : t.clickHintUnchecked),
-            checked && React.createElement("div", { className: "mt-4" },
+            checked && React.createElement("div", { className: "mt-4", "data-testid": "feedback", "data-correct": isCorrect ? "true" : "false" },
               isCorrect
                 ? React.createElement("div", { className: "text-green-700 font-medium" }, t.correct)
                 : React.createElement("div", { className: "text-rose-700 font-medium" },
-                    t.correctAnswerLabel, React.createElement("span", { className: "underline" }, acceptedAnswers[0]),
+                    t.correctAnswerLabel, React.createElement("span", { className: "underline", "data-testid": "correct-answer" }, acceptedAnswers[0]),
                     acceptedAnswers.length > 1 &&
                       React.createElement("span", { className: "text-slate-500" }, `${t.alsoAcceptedPrefix}${acceptedAnswers.slice(1).join(", ")}${t.alsoAcceptedSuffix}`)
                   )
@@ -322,22 +387,23 @@ function App() {
               ref: inputRef, value: input, onChange: (e) => setInput(e.target.value), onKeyDown: handleKeyDown,
               placeholder: t.placeholder,
               className: "w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:ring-2 focus:ring-sky-400 focus:border-sky-400 text-lg",
-              autoComplete: "off"
+              autoComplete: "off",
+              "data-testid": "answer-input"
             }),
             React.createElement("div", { className: "mt-3 flex flex-wrap gap-2" },
-              React.createElement("button", { onClick: checkAnswer, className: "px-4 py-2 rounded-xl bg-sky-600 text-white hover:bg-sky-700 active:translate-y-px" }, t.btnCheck),
-              React.createElement("button", { onClick: nextCard, className: "px-4 py-2 rounded-xl bg-slate-800 text-white hover:bg-slate-900 active:translate-y-px" }, t.btnNext),
-              React.createElement("button", { onClick: skipCard, className: "px-4 py-2 rounded-xl bg-amber-500 text-white hover:bg-amber-600 active:translate-y-px" }, t.btnSkip),
-              React.createElement("button", { onClick: reveal, className: "px-4 py-2 rounded-xl bg-rose-500 text-white hover:bg-rose-600 active:translate-y-px" }, t.btnReveal),
-              React.createElement("button", { onClick: reshuffle, className: "px-4 py-2 rounded-xl bg-green-600 text-white hover:bg-green-700 active:translate-y-px" }, t.btnReshuffle),
-              React.createElement("button", { onClick: resetStats, className: "px-4 py-2 rounded-xl bg-slate-200 text-slate-800 hover:bg-slate-300 active:translate-y-px" }, t.btnReset)
+              React.createElement("button", { onClick: checkAnswer, className: "px-4 py-2 rounded-xl bg-sky-600 text-white hover:bg-sky-700 active:translate-y-px", "data-testid": "btn-check" }, t.btnCheck),
+              React.createElement("button", { onClick: nextCard, className: "px-4 py-2 rounded-xl bg-slate-800 text-white hover:bg-slate-900 active:translate-y-px", "data-testid": "btn-next" }, t.btnNext),
+              React.createElement("button", { onClick: skipCard, className: "px-4 py-2 rounded-xl bg-amber-500 text-white hover:bg-amber-600 active:translate-y-px", "data-testid": "btn-skip" }, t.btnSkip),
+              React.createElement("button", { onClick: reveal, className: "px-4 py-2 rounded-xl bg-rose-500 text-white hover:bg-rose-600 active:translate-y-px", "data-testid": "btn-reveal" }, t.btnReveal),
+              React.createElement("button", { onClick: reshuffle, className: "px-4 py-2 rounded-xl bg-green-600 text-white hover:bg-green-700 active:translate-y-px", "data-testid": "btn-reshuffle" }, t.btnReshuffle),
+              React.createElement("button", { onClick: resetStats, className: "px-4 py-2 rounded-xl bg-slate-200 text-slate-800 hover:bg-slate-300 active:translate-y-px", "data-testid": "btn-reset" }, t.btnReset)
             ),
             React.createElement("div", { className: "mt-4 flex items-center gap-2 text-sm" },
-              React.createElement("input", { id: "strict", type: "checkbox", checked: strictAccents, onChange: (e) => setStrictAccents(e.target.checked), className: "h-4 w-4" }),
+              React.createElement("input", { id: "strict", type: "checkbox", checked: strictAccents, onChange: (e) => setStrictAccents(e.target.checked), className: "h-4 w-4", "data-testid": "strict-toggle" }),
               React.createElement("label", { htmlFor: "strict", className: "select-none cursor-pointer" }, t.strictLabel)
             )
           ),
-          React.createElement("div", { className: "text-center text-sm text-slate-600" }, t.counter(idx + 1, order.length))
+          React.createElement("div", { className: "text-center text-sm text-slate-600", "data-testid": "counter", "data-index": String(idx + 1), "data-total": String(order.length) }, t.counter(idx + 1, order.length))
         ),
         React.createElement("footer", { className: "mt-8 text-xs text-slate-500 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2" },
           React.createElement("div", null, t.tips),

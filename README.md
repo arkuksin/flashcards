@@ -64,3 +64,24 @@ Note: If a chosen dataset doesn’t define THEMES, the app automatically creates
 - In the browser, all available datasets are included; the English set (EN→IT) is used by default, and you can switch (EN ↔ DE ↔ RU ↔ FR).
 - Unit tests in Node use the Russian dataset (`dataset-ru.js`).
 - If a chosen dataset doesn’t define `THEMES`, the app automatically creates the `all` theme that covers the entire `WORDS` list.
+
+
+## End-to-end tests (Playwright)
+The project includes Playwright E2E tests that exercise the main flashcard flow.
+
+- Prerequisites: Node.js 20 (recommended) or 16+.
+- Install dependencies: `npm ci` (or `npm i`)
+- Install Playwright browsers: `npx playwright install`
+- Run tests locally (a static server will be started automatically at http://127.0.0.1:4173):
+  - `npx playwright test`
+- View the HTML report after a run:
+  - `npx playwright show-report`
+- Run against production instead of local (override base URL):
+  - PowerShell (Windows):
+    - `$env:BASE_URL = 'https://your-domain.example'`
+    - `npx playwright test`
+    - `Remove-Item Env:BASE_URL`
+  - macOS/Linux:
+    - `BASE_URL=https://your-domain.example npx playwright test`
+
+CI/CD: A GitHub Actions workflow (.github/workflows/e2e.yml) runs the same Playwright tests automatically on push and pull_request, installs browsers, and uploads the HTML report as an artifact if tests fail.
