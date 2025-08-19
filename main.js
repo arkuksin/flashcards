@@ -1,7 +1,6 @@
 // main.js — Fully working flashcards app (200 words)
 // React 18 + Tailwind via CDN. No build; ready for GitHub Pages.
 
-
 // ==== Data: EN default dataset (browser), optional RU/DE; RU used for Node tests ====
 let WORDS; // Node export (RU)
 let THEMES; // Node export (RU)
@@ -414,9 +413,29 @@ function App() {
   );
 }
 
+// Try to optionally load Vercel Analytics React component when a module resolver is available (e.g., Node/testing environments)
+let AnalyticsComponent = null;
+try {
+  if (typeof require === "function") {
+    const va = require("@vercel/analytics/react");
+    if (va && (va.Analytics || va.default)) {
+      AnalyticsComponent = va.Analytics || va.default;
+    }
+  }
+} catch (e) {
+  // Ignore if the package is not installed; index.html already includes web analytics script for browser
+}
+
 if (typeof document !== "undefined" && typeof ReactDOM !== "undefined") {
   const root = ReactDOM.createRoot(document.getElementById("root"));
-  root.render(React.createElement(App));
+  root.render(
+    React.createElement(
+      React.Fragment,
+      null,
+      React.createElement(App),
+      AnalyticsComponent ? React.createElement(AnalyticsComponent) : null
+    )
+  );
 }
 
 // Export pure utilities and data for Node.js tests
