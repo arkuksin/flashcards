@@ -339,8 +339,9 @@ function App() {
           ),
           React.createElement("div", { className: "text-center text-sm text-slate-600" }, t.counter(idx + 1, order.length))
         ),
-        React.createElement("footer", { className: "mt-8 text-xs text-slate-500" },
-          t.tips
+        React.createElement("footer", { className: "mt-8 text-xs text-slate-500 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2" },
+          React.createElement("div", null, t.tips),
+          React.createElement("div", null, React.createElement("a", { href: "impressum-datenschutz.html", className: "underline hover:no-underline text-slate-600" }, "Impressum"))
         )
       )
     )
