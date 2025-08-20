@@ -53,6 +53,7 @@
     { fr: "Bière", it: ["birra"] },
     { fr: "Café", it: ["caffe", "caffè"] },
     { fr: "Thé", it: ["te", "tè"] },
+    { fr: "Sucre", it: ["zucchero"] },
 
     // ⏰ Temps & calendrier (20)
     { fr: "Aujourd’hui", it: ["oggi"] },
@@ -167,11 +168,14 @@
 
   const THEMES = [
     { key: "all", name: "Tous les mots", start: 0, count: WORDS.length },
+    { key: "greetings", name: "Salutations & conversation", start: 0, count: 19 },
+    { key: "family", name: "Personnes & famille", start: 19, count: 20 },
+    { key: "food", name: "Nourriture & boissons", start: 39, count: 9 },
     { key: "time", name: "Temps & calendrier", start: 48, count: 20 },
     { key: "body", name: "Corps & santé", start: 68, count: 20 },
     { key: "education", name: "École & éducation", start: 88, count: 20 },
     { key: "city", name: "Ville & lieux", start: 108, count: 20 },
-    { key: "leisure", name: "Loisirs & hobbies", start: 128, count: 20 },
+    { key: "leisure", name: "Loisirs & hobbies", start: 128, count: 21 },
   ];
 
   if (typeof module !== 'undefined' && module.exports) {
