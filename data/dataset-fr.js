@@ -11,7 +11,7 @@
     { fr: "De rien", it: ["prego"] },
     { fr: "Oui", it: ["si", "sì"] },
     { fr: "Non", it: ["no"] },
-    { fr: "Excusez‑moi", it: ["scusi", "scusa"] },
+    { fr: "Excusez-moi", it: ["scusi", "scusa"] },
     { fr: "Je suis désolé", it: ["mi dispiace"] },
     { fr: "Comment ça va?", it: ["come stai", "come va"] },
     { fr: "Bien", it: ["bene"] },
@@ -19,7 +19,7 @@
     { fr: "Comme ci, comme ça", it: ["cosi cosi", "così così", "cosi-cosi"] },
     { fr: "Je m’appelle…", it: ["mi chiamo"] },
     { fr: "Enchanté", it: ["piacere"] },
-    { fr: "Comment vous appelez‑vous?", it: ["come si chiama"] },
+    { fr: "Comment vous appelez-vous?", it: ["come si chiama"] },
     { fr: "À l’aide!", it: ["aiuto"] },
 
     // 👤 Personnes & famille (20)
@@ -37,8 +37,8 @@
     { fr: "Mari", it: ["marito"] },
     { fr: "Femme (épouse)", it: ["moglie"] },
     { fr: "Parents", it: ["genitori"] },
-    { fr: "Grand‑père", it: ["nonno"] },
-    { fr: "Grand‑mère", it: ["nonna"] },
+    { fr: "Grand-père", it: ["nonno"] },
+    { fr: "Grand-mère", it: ["nonna"] },
     { fr: "Gens", it: ["gente"] },
     { fr: "Prénom", it: ["nome"] },
     { fr: "Nom de famille", it: ["cognome"] },
