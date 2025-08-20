@@ -1,0 +1,51 @@
+name: E2E on Vercel Preview
+
+on:
+  deployment_status:
+    types: [success]
+
+permissions:
+  contents: read
+  deployments: read
+  statuses: write
+
+jobs:
+  e2e:
+    name: e2e
+    if: >-
+      ${{ github.event.deployment.environment && contains(github.event.deployment.environment, 'Preview') }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Extract Preview URL
+        id: url
+        run: |
+          env_url="${{ github.event.deployment_status.environment_url }}"
+          target_url="${{ github.event.deployment_status.target_url }}"
+          final_url="$env_url"
+          if [ -z "$final_url" ]; then
+            final_url="$target_url"
+          fi
+          if [ -z "$final_url" ]; then
+            echo "No environment URL found on deployment_status event" >&2
+            exit 1
+          fi
+          echo "preview_url=$final_url" >> "$GITHUB_OUTPUT"
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps
+
+      - name: Run Playwright tests against Vercel Preview
+        env:
+          BASE_URL: ${{ steps.url.outputs.preview_url }}
+        run: npx playwright test --reporter=github
