@@ -55,6 +55,7 @@ const I18N = {
     scoreLabel: "Score: ",
     attemptsLabel: "Attempts: ",
     accuracyLabel: "Accuracy: ",
+    streakLabel: "Streak: ",
     sourceLabel: "English word",
     clickHintUnchecked: "Click to check.",
     clickHintChecked: "Click to go next.",
@@ -82,6 +83,7 @@ const I18N = {
     scoreLabel: "Очки: ",
     attemptsLabel: "Попытки: ",
     accuracyLabel: "Точность: ",
+    streakLabel: "Серия: ",
     sourceLabel: "Русское слово",
     clickHintUnchecked: "Кликни, чтобы проверить.",
     clickHintChecked: "Кликни, чтобы перейти дальше.",
@@ -109,6 +111,7 @@ const I18N = {
     scoreLabel: "Punkte: ",
     attemptsLabel: "Versuche: ",
     accuracyLabel: "Genauigkeit: ",
+    streakLabel: "Serie: ",
     sourceLabel: "Deutsches Wort",
     clickHintUnchecked: "Klicke, um zu prüfen.",
     clickHintChecked: "Klicke, um weiterzugehen.",
@@ -136,6 +139,7 @@ const I18N = {
     scoreLabel: "Score : ",
     attemptsLabel: "Essais : ",
     accuracyLabel: "Précision : ",
+    streakLabel: "Série : ",
     sourceLabel: "Mot français",
     clickHintUnchecked: "Cliquez pour vérifier.",
     clickHintChecked: "Cliquez pour continuer.",
@@ -222,6 +226,54 @@ function App() {
   const [attempts, setAttempts] = React.useState(0);
   const [strictAccents, setStrictAccents] = React.useState(false);
 
+  // Streak state with persistence (localStorage → sessionStorage → memory)
+  const loadStreak = () => {
+    try {
+      if (typeof window !== "undefined" && window.localStorage) {
+        const v = window.localStorage.getItem("streak");
+        if (v !== null) return Math.max(0, parseInt(v, 10) || 0);
+      }
+    } catch (e) {}
+    try {
+      if (typeof window !== "undefined" && window.sessionStorage) {
+        const v = window.sessionStorage.getItem("streak");
+        if (v !== null) return Math.max(0, parseInt(v, 10) || 0);
+      }
+    } catch (e) {}
+    return 0;
+  };
+  const [streak, setStreak] = React.useState(loadStreak);
+  const lastCelebratedRef = React.useRef(0);
+  const celebrateTimeoutRef = React.useRef(null);
+  const [celebrateMsg, setCelebrateMsg] = React.useState("");
+  const [showCelebrate, setShowCelebrate] = React.useState(false);
+
+  const persistStreak = React.useCallback((val) => {
+    const s = String(Math.max(0, val|0));
+    try { if (typeof window !== "undefined" && window.localStorage) window.localStorage.setItem("streak", s); } catch(e) {}
+    try { if (typeof window !== "undefined" && window.sessionStorage) window.sessionStorage.setItem("streak", s); } catch(e) {}
+  }, []);
+
+  React.useEffect(() => { persistStreak(streak); }, [streak, persistStreak]);
+
+  function triggerCelebration(n) {
+    if (!n || n % 10 !== 0) return;
+    if (lastCelebratedRef.current === n) return; // guard against double trigger
+    lastCelebratedRef.current = n;
+    setCelebrateMsg(`Congrats! ${n} correct in a row!`);
+    setShowCelebrate(true);
+    if (celebrateTimeoutRef.current) { clearTimeout(celebrateTimeoutRef.current); }
+    celebrateTimeoutRef.current = setTimeout(() => {
+      setShowCelebrate(false);
+    }, 2500);
+  }
+
+  React.useEffect(() => {
+    return () => {
+      if (celebrateTimeoutRef.current) { clearTimeout(celebrateTimeoutRef.current); }
+    };
+  }, []);
+
   const current = React.useMemo(() => WORDS_LOCAL[order[idx]], [order, idx, WORDS_LOCAL]);
   const inputRef = React.useRef(null);
 
@@ -252,7 +304,20 @@ function App() {
       const normTarget = strictAccents ? normalize(ans) : normalize(stripDiacritics(ans));
       return user === normTarget;
     });
-    setIsCorrect(ok); setChecked(true); setAttempts((a) => a + 1); if (ok) setPoints((p) => p + 1);
+    setIsCorrect(ok);
+    setChecked(true);
+    setAttempts((a) => a + 1);
+    if (ok) {
+      setPoints((p) => p + 1);
+      setStreak((s) => {
+        const next = s + 1;
+        triggerCelebration(next);
+        return next;
+      });
+    } else {
+      setStreak(0);
+      lastCelebratedRef.current = 0; // allow future celebrations at 10,20,... after a reset
+    }
   }
 
   function nextCard() {
@@ -263,7 +328,7 @@ function App() {
   }
 
   const skipCard = () => { setAttempts((a) => a + 1); nextCard(); };
-  const reveal = () => { setInput(acceptedAnswers[0] || ""); setChecked(true); setIsCorrect(false); setAttempts((a) => a + 1); };
+  const reveal = () => { setInput(acceptedAnswers[0] || ""); setChecked(true); setIsCorrect(false); setAttempts((a) => a + 1); setStreak(0); lastCelebratedRef.current = 0; };
   const reshuffle = () => { setOrder(shuffle(poolIndices)); setIdx(0); setInput(""); setChecked(false); setIsCorrect(false); setPoints(0); setAttempts(0); };
   const resetStats = () => { setIdx(0); setInput(""); setChecked(false); setIsCorrect(false); setPoints(0); setAttempts(0); inputRef.current?.focus(); };
 
@@ -353,7 +418,19 @@ function App() {
           React.createElement("div", { className: "flex gap-3 text-sm" },
             React.createElement("div", { className: "bg-white rounded-xl shadow px-3 py-2", "data-testid": "score", "data-value": String(points) }, t.scoreLabel, React.createElement("b", null, points)),
             React.createElement("div", { className: "bg-white rounded-xl shadow px-3 py-2", "data-testid": "attempts", "data-value": String(attempts) }, t.attemptsLabel, React.createElement("b", null, attempts)),
-            React.createElement("div", { className: "bg-white rounded-xl shadow px-3 py-2", "data-testid": "accuracy", "data-value": String(accuracy) }, t.accuracyLabel, React.createElement("b", null, accuracy), "%")
+            React.createElement("div", { className: "bg-white rounded-xl shadow px-3 py-2", "data-testid": "accuracy", "data-value": String(accuracy) }, t.accuracyLabel, React.createElement("b", null, accuracy), "%"),
+            React.createElement("div", { className: "bg-white rounded-xl shadow px-3 py-2", "data-testid": "streak", "data-value": String(streak), role: "status", "aria-live": "polite" }, t.streakLabel, React.createElement("b", null, streak))
+          )
+        ),
+        // Celebration toast (non-blocking)
+        React.createElement("div", { className: "fixed top-4 left-0 right-0 flex justify-center pointer-events-none z-50" },
+          showCelebrate && React.createElement(
+            "div",
+            { className: "pointer-events-none bg-white border border-sky-300 rounded-2xl shadow-lg px-4 py-3 text-sky-900 flex items-center gap-2",
+              role: "status", "aria-live": "polite", "aria-atomic": "true", "data-testid": "celebration" },
+            React.createElement("span", { className: "text-2xl animate-bounce", "aria-hidden": "true" }, "🎉"),
+            React.createElement("span", null, celebrateMsg),
+            React.createElement("span", { className: "text-2xl animate-bounce", "aria-hidden": "true" }, "🎉")
           )
         ),
         React.createElement("main", { className: "flex flex-col gap-4" },
