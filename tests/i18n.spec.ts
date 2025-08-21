@@ -77,12 +77,11 @@ const locales = {
     const flag = page.getByTestId(`flag-${code}`);
     await flag.click();
 
-    // Wait for translated heading to ensure React effects ran
-    await expect(page.getByRole('heading', { level: 1 })).toHaveText(t.title);
+    // Wait until the document lang attribute reflects selection (ensures effects ran)
+    await page.waitForFunction((expected) => document.documentElement.lang === expected, code);
 
-    // Now html[lang] should match the code
-    const htmlLang = await page.evaluate(() => document.documentElement.lang);
-    expect(htmlLang).toBe(code);
+    // Now the translated heading should be present
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText(t.title);
 
     // Header labels contain translated text
     const header = page.getByTestId('header');

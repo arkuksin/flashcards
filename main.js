@@ -226,6 +226,60 @@ function App() {
   const [attempts, setAttempts] = React.useState(0);
   const [strictAccents, setStrictAccents] = React.useState(false);
 
+  // Diff state for wrong answers (structured, rendered near input)
+  const [diffResult, setDiffResult] = React.useState(null);
+
+  // Localized texts for diff highlight area (visible labels and count), based on current language
+  const DIFF_I18N = React.useMemo(() => {
+    const map = {
+      en: {
+        yourAnswer: "Your answer",
+        correctAnswer: "Correct answer",
+        lettersWrong: (n) => `${n} ${n === 1 ? "letter was wrong" : "letters were wrong"}`
+      },
+      de: {
+        yourAnswer: "Deine Antwort",
+        correctAnswer: "Richtige Antwort",
+        lettersWrong: (n) => `${n} ${n === 1 ? "Buchstabe war falsch" : "Buchstaben waren falsch"}`
+      },
+      ru: {
+        yourAnswer: "Ваш ответ",
+        correctAnswer: "Правильный ответ",
+        lettersWrong: (n) => {
+          const mod10 = n % 10;
+          const mod100 = n % 100;
+          if (mod10 === 1 && mod100 !== 11) return `${n} буква была неверной`;
+          if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return `${n} буквы были неверны`;
+          return `${n} букв были неверны`;
+        }
+      },
+      fr: {
+        yourAnswer: "Votre réponse",
+        correctAnswer: "Bonne réponse",
+        lettersWrong: (n) => `${n} ${n === 1 ? "lettre était incorrecte" : "lettres étaient incorrectes"}`
+      }
+    };
+    return map[lang] || map.en;
+  }, [lang]);
+
+  // Compute best diff against accepted answers (fewest errors)
+  const computeBestDiff = React.useCallback((rawInput, answers, opts) => {
+    try {
+      const cmp = (window && window.WordDiff && typeof window.WordDiff.compareWords === 'function')
+        ? window.WordDiff.compareWords
+        : null;
+      if (!cmp || !Array.isArray(answers) || answers.length === 0) return null;
+      let best = null;
+      for (const ans of answers) {
+        const d = cmp(rawInput, String(ans || ''), opts);
+        if (!best || d.summary.totalErrors < best.summary.totalErrors) best = d;
+      }
+      return best;
+    } catch (e) {
+      return null;
+    }
+  }, []);
+
   // Streak state with persistence (localStorage → sessionStorage → memory)
   const loadStreak = () => {
     try {
@@ -309,12 +363,16 @@ function App() {
     setAttempts((a) => a + 1);
     if (ok) {
       setPoints((p) => p + 1);
+      setDiffResult(null);
       setStreak((s) => {
         const next = s + 1;
         triggerCelebration(next);
         return next;
       });
     } else {
+      // Compute best diff against first accepted answer(s)
+      const best = computeBestDiff(input, acceptedAnswers, { caseInsensitive: true, ignoreDiacritics: !strictAccents });
+      setDiffResult(best);
       setStreak(0);
       lastCelebratedRef.current = 0; // allow future celebrations at 10,20,... after a reset
     }
@@ -324,13 +382,13 @@ function App() {
     const next = idx + 1;
     if (next >= order.length) { setOrder(shuffle(poolIndices)); setIdx(0); }
     else { setIdx(next); }
-    setInput(""); setChecked(false); setIsCorrect(false); inputRef.current?.focus();
+    setInput(""); setChecked(false); setIsCorrect(false); setDiffResult(null); inputRef.current?.focus();
   }
 
-  const skipCard = () => { setAttempts((a) => a + 1); nextCard(); };
-  const reveal = () => { setInput(acceptedAnswers[0] || ""); setChecked(true); setIsCorrect(false); setAttempts((a) => a + 1); setStreak(0); lastCelebratedRef.current = 0; };
-  const reshuffle = () => { setOrder(shuffle(poolIndices)); setIdx(0); setInput(""); setChecked(false); setIsCorrect(false); setPoints(0); setAttempts(0); };
-  const resetStats = () => { setIdx(0); setInput(""); setChecked(false); setIsCorrect(false); setPoints(0); setAttempts(0); inputRef.current?.focus(); };
+  const skipCard = () => { setAttempts((a) => a + 1); setDiffResult(null); nextCard(); };
+  const reveal = () => { setInput(acceptedAnswers[0] || ""); setChecked(true); setIsCorrect(false); setAttempts((a) => a + 1); setStreak(0); lastCelebratedRef.current = 0; setDiffResult(null); };
+  const reshuffle = () => { setOrder(shuffle(poolIndices)); setIdx(0); setInput(""); setChecked(false); setIsCorrect(false); setPoints(0); setAttempts(0); setDiffResult(null); };
+  const resetStats = () => { setIdx(0); setInput(""); setChecked(false); setIsCorrect(false); setPoints(0); setAttempts(0); setDiffResult(null); inputRef.current?.focus(); };
 
   function onCardClick() {
     if (!checked) { if (!input.trim()) return inputRef.current?.focus(); checkAnswer(); }
@@ -474,6 +532,45 @@ function App() {
               React.createElement("button", { onClick: reshuffle, className: "px-4 py-2 rounded-xl bg-green-600 text-white hover:bg-green-700 active:translate-y-px", "data-testid": "btn-reshuffle" }, t.btnReshuffle),
               React.createElement("button", { onClick: resetStats, className: "px-4 py-2 rounded-xl bg-slate-200 text-slate-800 hover:bg-slate-300 active:translate-y-px", "data-testid": "btn-reset" }, t.btnReset)
             ),
+            (checked && !isCorrect && diffResult) ? React.createElement("div", { className: "mt-4", "data-testid": "diff-feedback", role: "status", "aria-live": "polite", "data-errors": String(diffResult.summary.totalErrors) },
+              React.createElement("div", { className: "text-slate-700 text-sm mb-2" }, DIFF_I18N.lettersWrong(diffResult.summary.totalErrors)),
+              React.createElement("div", { className: "bg-white rounded-2xl border border-slate-200 shadow-sm p-3" },
+                React.createElement("div", { className: "text-xs text-slate-500 mb-1" }, DIFF_I18N.yourAnswer),
+                React.createElement("div", { className: "font-mono text-base flex flex-wrap gap-1" },
+                  diffResult.ops.map((op) => {
+                    const pos = (op.col || 0) + 1;
+                    if (op.type === 'equal') {
+                      return React.createElement("span", { key: `u-${pos}`, className: "text-green-700 transition-colors", "data-op": op.type, "data-pos": String(pos), "aria-label": `Position ${pos}: correct '${op.a}'` }, op.a);
+                    }
+                    if (op.type === 'replace') {
+                      return React.createElement("span", { key: `u-${pos}`, className: "text-rose-800 underline decoration-rose-500 decoration-2 rounded px-0.5 transition-colors", "data-op": op.type, "data-pos": String(pos), "aria-label": `Position ${pos}: expected '${op.b}', got '${op.a}'` }, op.a);
+                    }
+                    if (op.type === 'delete') {
+                      return React.createElement("span", { key: `u-${pos}`, className: "text-rose-800 line-through decoration-rose-500 decoration-2 rounded px-0.5 transition-colors", "data-op": op.type, "data-pos": String(pos), "aria-label": `Position ${pos}: extra '${op.a}'` }, op.a);
+                    }
+                    // insert (missing in user)
+                    return React.createElement("span", { key: `u-${pos}`, className: "text-slate-500 bg-slate-200/70 rounded px-1 transition-colors", "data-op": op.type, "data-pos": String(pos), "aria-label": `Position ${pos}: missing '${op.b}'` }, "▯");
+                  })
+                ),
+                React.createElement("div", { className: "text-xs text-slate-500 mt-3 mb-1" }, "Correct answer"),
+                React.createElement("div", { className: "font-mono text-base flex flex-wrap gap-1" },
+                  diffResult.ops.map((op) => {
+                    const pos = (op.col || 0) + 1;
+                    if (op.type === 'equal') {
+                      return React.createElement("span", { key: `c-${pos}`, className: "text-slate-900 transition-colors", "data-op": op.type, "data-pos": String(pos), "aria-label": `Position ${pos}: '${op.b}'` }, op.b);
+                    }
+                    if (op.type === 'replace') {
+                      return React.createElement("span", { key: `c-${pos}`, className: "bg-emerald-50 text-emerald-800 rounded px-1 shadow-sm transition-colors", "data-op": op.type, "data-pos": String(pos), "aria-label": `Position ${pos}: should be '${op.b}' not '${op.a}'` }, op.b);
+                    }
+                    if (op.type === 'insert') {
+                      return React.createElement("span", { key: `c-${pos}`, className: "bg-emerald-50 text-emerald-800 rounded px-1 shadow-sm transition-colors", "data-op": op.type, "data-pos": String(pos), "aria-label": `Position ${pos}: missing '${op.b}'` }, op.b);
+                    }
+                    // delete (extra in user) -> placeholder to keep alignment
+                    return React.createElement("span", { key: `c-${pos}`, className: "opacity-0 select-none", "data-op": op.type, "data-pos": String(pos), "aria-hidden": "true" }, ".");
+                  })
+                )
+              )
+            ) : null,
             React.createElement("div", { className: "mt-4 flex items-center gap-2 text-sm" },
               React.createElement("input", { id: "strict", type: "checkbox", checked: strictAccents, onChange: (e) => setStrictAccents(e.target.checked), className: "h-4 w-4", "data-testid": "strict-toggle" }),
               React.createElement("label", { htmlFor: "strict", className: "select-none cursor-pointer" }, t.strictLabel)
