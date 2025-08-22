@@ -84,4 +84,10 @@ The project includes Playwright E2E tests that exercise the main flashcard flow.
   - macOS/Linux:
     - `BASE_URL=https://your-domain.example npx playwright test`
 
-CI/CD: A GitHub Actions workflow (.github/workflows/e2e.yml) runs the same Playwright tests automatically on push and pull_request, installs browsers, and uploads the HTML report as an artifact if tests fail.
+CI/CD:
+- E2E on Preview: The workflow .github/workflows/e2e-on-vercel-preview.yml runs Playwright E2E tests automatically when a Vercel Preview deployment succeeds. This occurs when:
+  - A Pull Request is opened or updated; or
+  - A non-main branch receives a push (branch previews must be enabled in Vercel).
+  It extracts the Preview URL and runs tests against it. The job name is "e2e"; the status check will appear in PRs as: E2E on Vercel Preview / e2e.
+- Production deploys: Merging to main triggers only Vercel Production deployment (managed by Vercel). No Playwright tests run on Production.
+- Branch protection: In GitHub Settings → Branches → Branch protection rules for main, add a required status check named "E2E on Vercel Preview / e2e" and disallow bypass. With this setting, PRs cannot be merged unless the E2E check passes.
