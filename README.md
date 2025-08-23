@@ -4,7 +4,28 @@ A single‑page app to practice Italian vocabulary. By default it uses English �
 React 18 + Tailwind via CDN, no build step. Works locally and on GitHub Pages.
 
 ## Quick start
-Open `index.html` in your browser.
+- Word Learning: open `index.html` in your browser.
+- Grammar — Comparatives & Superlatives: open `grammar.html` in your browser.
+
+## Grammar — Comparatives & Superlatives
+A new learning area alongside Word Learning focused on adjective degrees.
+
+- Languages: English, Deutsch, Italiano, Русский.
+- Content: 100 core adjectives per language (positives). Comparative and superlative forms are generated at runtime using language‑specific rules (with irregulars where applicable).
+- Modes:
+  - Multiple choice — choose the correct form.
+  - Fill‑in — type the correct form.
+  - Drag & drop — assign positive/comparative/superlative to the correct slots (click‑to‑assign for accessibility).
+- UX: instant feedback on mistakes, highlighted corrections, progress indicator, responsive UI.
+- Navigation: switch between sections via the top navigation (Word Learning ↔ Grammar).
+- Extensible: the module is designed to be extended with more grammar topics (e.g., verb tenses) by adding logic and datasets under `logic\grammar` and `data\grammar`.
+
+### Shortcuts (Grammar)
+- Enter: Check answer (Fill-in, Drag & drop). If already checked, advances to the next exercise.
+- → (ArrowRight): Next exercise.
+- Esc: Clear input (Fill-in mode).
+- 1–4: Choose the corresponding option in Multiple choice (options are numbered 1., 2., 3., 4.).
+- Italian Fill-in: Use the “Strict accent check (è ≠ e)” toggle to require exact accents; when OFF, answers are accepted without accents.
 
 ## GitHub Pages
 Commit the files to your repository (branch `main`, at the repository root). Enable Settings → Pages → Deploy from branch → `main` / root.
@@ -56,9 +77,14 @@ The app provides these themes (names are localized per chosen UI language):
 Note: If a chosen dataset doesn’t define THEMES, the app automatically creates the All words theme covering all available words.
 
 ## Tests
+Unit tests (Node.js):
 - Requires Node.js 16+.
-- Run (Windows): `node tests\main.test.js`
-- Run (macOS/Linux): `node tests/main.test.js`
+- Run all unit tests: `npm run test:unit`
+- Run individually:
+  - Windows: `node tests\main.test.js` and `node tests\grammar.logic.test.js`
+  - macOS/Linux: `node tests/main.test.js` and `node tests/grammar.logic.test.js`
+
+For End-to-end tests (Playwright), see the section below (requires Node.js 18+).
 
 ## Notes
 - In the browser, all available datasets are included; the English set (EN→IT) is used by default, and you can switch (EN ↔ DE ↔ RU ↔ FR).
@@ -69,7 +95,7 @@ Note: If a chosen dataset doesn’t define THEMES, the app automatically creates
 ## End-to-end tests (Playwright)
 The project includes Playwright E2E tests that exercise the main flashcard flow.
 
-- Prerequisites: Node.js 20 (recommended) or 16+.
+- Prerequisites: Node.js 18+ (20+ recommended).
 - Install dependencies: `npm ci` (or `npm i`)
 - Install Playwright browsers: `npx playwright install`
 - Run tests locally (a static server will be started automatically at http://127.0.0.1:4173):
