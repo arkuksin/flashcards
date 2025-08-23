@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Grammar — Comparatives & Superlatives</title>
+    <link rel="icon" href="./assets/icons/favicon.ico" type="image/x-icon" />
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body class="bg-slate-50">
+    <nav class="bg-white border-b border-slate-200">
+      <div class="max-w-5xl mx-auto px-4 py-2 flex items-center gap-4 text-sm">
+        <a href="./index.html" class="text-sky-700 hover:text-sky-900 font-medium">Word Learning</a>
+        <a href="./grammar.html" class="text-slate-700 hover:text-slate-900 font-medium">Comparatives & Superlatives</a>
+      </div>
+    </nav>
+    <div id="root"></div>
+
+    <!-- React via CDN -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+
+    <!-- Business logic -->
+    <script src="./logic/grammar/comparatives.js"></script>
+
+    <!-- Data: 100 adjectives per language (positives only); forms derived at runtime -->
+    <script src="./data/grammar/adjectives-en.js"></script>
+    <script src="./data/grammar/adjectives-de.js"></script>
+    <script src="./data/grammar/adjectives-it.js"></script>
+    <script src="./data/grammar/adjectives-ru.js"></script>
+
+    <!-- UI -->
+    <script src="./grammar.js"></script>
+  </body>
+</html>
