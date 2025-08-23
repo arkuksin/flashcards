@@ -4,12 +4,14 @@
   "private": true,
   "description": "Static Italian flashcards app with Playwright E2E tests",
   "scripts": {
+    "prepare": "husky",
     "test:e2e": "playwright test",
     "serve": "http-server -p 4173 -a 127.0.0.1 -c-1 .",
     "playwright:report": "playwright show-report"
   },
   "devDependencies": {
     "@playwright/test": "^1.47.2",
-    "http-server": "^14.1.1"
+    "http-server": "^14.1.1",
+    "husky": "^9.1.6"
   }
 }
