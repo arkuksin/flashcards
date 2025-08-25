@@ -70,6 +70,20 @@ try {
   AnswerChecker = (typeof window !== "undefined" && window.checkAnswer) ? window.checkAnswer : null;
 }
 
+// ==== Diff computation (moved to logic/diff.js) ====
+let computeBestDiff;
+try {
+  if (typeof module !== "undefined" && module.exports && typeof require === "function") {
+    computeBestDiff = require("./logic/diff.js");
+  } else if (typeof window !== "undefined" && window.computeBestDiff) {
+    computeBestDiff = window.computeBestDiff;
+  } else {
+    computeBestDiff = null;
+  }
+} catch (e) {
+  computeBestDiff = (typeof window !== "undefined" && window.computeBestDiff) ? window.computeBestDiff : null;
+}
+
 const FLAG_ICONS = {
   en: { src: "https://twemoji.maxcdn.com/v/latest/svg/1f1ec-1f1e7.svg", label: "English" },
   de: { src: "https://twemoji.maxcdn.com/v/latest/svg/1f1e9-1f1ea.svg", label: "Deutsch" },
@@ -153,23 +167,6 @@ function App() {
     };
   }, [lang]);
 
-  // Compute best diff against accepted answers (fewest errors)
-  const computeBestDiff = React.useCallback((rawInput, answers, opts) => {
-    try {
-      const cmp = (window && window.WordDiff && typeof window.WordDiff.compareWords === 'function')
-        ? window.WordDiff.compareWords
-        : null;
-      if (!cmp || !Array.isArray(answers) || answers.length === 0) return null;
-      let best = null;
-      for (const ans of answers) {
-        const d = cmp(rawInput, String(ans || ''), opts);
-        if (!best || d.summary.totalErrors < best.summary.totalErrors) best = d;
-      }
-      return best;
-    } catch (e) {
-      return null;
-    }
-  }, []);
 
   // Streak state with persistence (localStorage → sessionStorage → memory)
   const loadStreak = () => {
