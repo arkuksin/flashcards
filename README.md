@@ -85,9 +85,9 @@ The project includes Playwright E2E tests that exercise the main flashcard flow.
     - `BASE_URL=https://your-domain.example npx playwright test`
 
 CI/CD:
-- E2E on Preview: The workflow .github/workflows/e2e-on-vercel-preview.yml runs Playwright E2E tests automatically when a Vercel Preview deployment succeeds. This occurs when:
-  - A Pull Request is opened or updated; or
-  - A non-main branch receives a push (branch previews must be enabled in Vercel).
-  It extracts the Preview URL and runs tests against it. The job name is "e2e"; the status check will appear in PRs as: E2E on Vercel Preview / e2e.
-- Production deploys: Merging to main triggers only Vercel Production deployment (managed by Vercel). No Playwright tests run on Production.
-- Branch protection: In GitHub Settings → Branches → Branch protection rules for main, add a required status check named "E2E on Vercel Preview / e2e" and disallow bypass. With this setting, PRs cannot be merged unless the E2E check passes.
+- PR/Push CI: The workflow `.github/workflows/ci.yml` runs on pull requests and pushes. It has two jobs:
+  - `CI / unit`: executes Node unit tests (tests/*.test.js). The job fails if any unit test fails.
+  - `CI / e2e`: runs the local Playwright suite (auto-starting a static server). It depends on the unit job and fails on any E2E failure.
+- E2E on Preview: `.github/workflows/e2e-on-vercel-preview.yml` runs Playwright against Vercel Preview deployments (job name `e2e`). The status check appears as `E2E on Vercel Preview / e2e`.
+- Production deploys: Merging to main triggers Vercel Production deployment (managed by Vercel). No Playwright tests run on Production by default.
+- Branch protection: In GitHub Settings → Branches → Branch protection rules for `main`, set required status checks: `CI / unit` and `CI / e2e` (and optionally `E2E on Vercel Preview / e2e`). With these required checks, PRs cannot be merged unless all selected checks pass.

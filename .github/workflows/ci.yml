@@ -1,0 +1,62 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: ["**"]
+
+permissions:
+  contents: read
+  statuses: write
+
+jobs:
+  unit:
+    name: unit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run Node unit tests
+        shell: bash
+        run: |
+          set -e
+          node tests/main.test.js
+          node tests/utils.test.js
+          node tests/utils-edges.test.js
+          node tests/checker.test.js
+          node tests/diff.test.js
+
+  e2e:
+    name: e2e
+    needs: unit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps
+
+      - name: Run Playwright tests (local server)
+        env:
+          # Let Playwright use its local static server on 127.0.0.1:4173 per playwright.config.ts
+          # BASE_URL not set → local http-server will be auto-started
+          PLAYWRIGHT_JUNIT_OUTPUT_NAME: results.xml
+        run: npx playwright test --reporter=github
