@@ -28,21 +28,18 @@ if (typeof window !== "undefined") {
   ];
 }
 
-// ==== Utilities ====
-const stripDiacritics = (s) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-const normalize = (s) =>
-  stripDiacritics(String(s || "").toLowerCase())
-    .replace(/[!?.,;:¿¡/\\()\[\]{}'\"`´’‛“”„–—-]/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-
-function shuffle(array) {
-  const a = [...array];
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
+// ==== Utilities (moved to logic/utils.js) ====
+let Utils;
+try {
+  if (typeof module !== "undefined" && module.exports && typeof require === "function") {
+    Utils = require("./logic/utils.js");
+  } else if (typeof window !== "undefined" && window.Utils) {
+    Utils = window.Utils;
+  } else {
+    Utils = {};
   }
-  return a;
+} catch (e) {
+  Utils = (typeof window !== "undefined" && window.Utils) ? window.Utils : {};
 }
 
 // ==== I18N strings for EN, RU, DE, FR UI ====
@@ -217,7 +214,7 @@ function App() {
     return arr;
   }, [themeKey, THEMES_LOCAL, WORDS_LOCAL]);
 
-  const [order, setOrder] = React.useState(() => shuffle(poolIndices));
+  const [order, setOrder] = React.useState(() => Utils.shuffle(poolIndices));
   const [idx, setIdx] = React.useState(0);
   const [input, setInput] = React.useState("");
   const [checked, setChecked] = React.useState(false);
@@ -335,7 +332,7 @@ function App() {
 
   // Reset deck and stats when theme changes
   React.useEffect(() => {
-    setOrder(shuffle(poolIndices));
+    setOrder(Utils.shuffle(poolIndices));
     setIdx(0);
     setInput("");
     setChecked(false);
@@ -353,9 +350,9 @@ function App() {
 
   function checkAnswer() {
     if (checked) return;
-    const user = strictAccents ? normalize(input) : normalize(stripDiacritics(input));
+    const user = strictAccents ? Utils.normalize(input) : Utils.normalize(Utils.stripDiacritics(input));
     const ok = acceptedAnswers.some((ans) => {
-      const normTarget = strictAccents ? normalize(ans) : normalize(stripDiacritics(ans));
+      const normTarget = strictAccents ? Utils.normalize(ans) : Utils.normalize(Utils.stripDiacritics(ans));
       return user === normTarget;
     });
     setIsCorrect(ok);
@@ -380,14 +377,14 @@ function App() {
 
   function nextCard() {
     const next = idx + 1;
-    if (next >= order.length) { setOrder(shuffle(poolIndices)); setIdx(0); }
+    if (next >= order.length) { setOrder(Utils.shuffle(poolIndices)); setIdx(0); }
     else { setIdx(next); }
     setInput(""); setChecked(false); setIsCorrect(false); setDiffResult(null); inputRef.current?.focus();
   }
 
   const skipCard = () => { setAttempts((a) => a + 1); setDiffResult(null); nextCard(); };
   const reveal = () => { setInput(acceptedAnswers[0] || ""); setChecked(true); setIsCorrect(false); setAttempts((a) => a + 1); setStreak(0); lastCelebratedRef.current = 0; setDiffResult(null); };
-  const reshuffle = () => { setOrder(shuffle(poolIndices)); setIdx(0); setInput(""); setChecked(false); setIsCorrect(false); setPoints(0); setAttempts(0); setDiffResult(null); };
+  const reshuffle = () => { setOrder(Utils.shuffle(poolIndices)); setIdx(0); setInput(""); setChecked(false); setIsCorrect(false); setPoints(0); setAttempts(0); setDiffResult(null); };
   const resetStats = () => { setIdx(0); setInput(""); setChecked(false); setIsCorrect(false); setPoints(0); setAttempts(0); setDiffResult(null); inputRef.current?.focus(); };
 
   function onCardClick() {
@@ -614,5 +611,5 @@ if (typeof document !== "undefined" && typeof ReactDOM !== "undefined") {
 
 // Export pure utilities and data for Node.js tests
 if (typeof module !== "undefined" && module.exports) {
-  module.exports = { WORDS, THEMES, stripDiacritics, normalize, shuffle };
+  module.exports = { WORDS, THEMES, stripDiacritics: Utils.stripDiacritics, normalize: Utils.normalize, shuffle: Utils.shuffle };
 }
