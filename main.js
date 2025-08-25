@@ -42,121 +42,19 @@ try {
   Utils = (typeof window !== "undefined" && window.Utils) ? window.Utils : {};
 }
 
-// ==== I18N strings for EN, RU, DE, FR UI ====
-const I18N = {
-  en: {
-    title: "Italian Flashcards — 300 Words",
-    subtitle: "Type the Italian translation and click the card. Enter — check, click again — next.",
-    langLabel: "Language:",
-    themeLabel: "Theme:",
-    scoreLabel: "Score: ",
-    attemptsLabel: "Attempts: ",
-    accuracyLabel: "Accuracy: ",
-    streakLabel: "Streak: ",
-    sourceLabel: "English word",
-    clickHintUnchecked: "Click to check.",
-    clickHintChecked: "Click to go next.",
-    correct: "Correct! ✅",
-    correctAnswerLabel: "Correct answer: ",
-    alsoAcceptedPrefix: " (also accepted: ",
-    alsoAcceptedSuffix: ")",
-    inputLabel: "Enter the Italian translation",
-    placeholder: "e.g.: ciao",
-    btnCheck: "Check (Enter)",
-    btnNext: "Next (→)",
-    btnSkip: "Skip",
-    btnReveal: "Reveal",
-    btnReshuffle: "Reshuffle",
-    btnReset: "Reset score/attempts/accuracy and restart",
-    strictLabel: "Strict accent check (è ≠ e)",
-    counter: (i, n) => `Card ${i} of ${n}`,
-    tips: "Tips: 1) Enter — check, → — next. 2) Clicking the card also checks/advances. 3) Accents are optional by default (caffe counts as caffè)."
-  },
-  ru: {
-    title: "Итальянские карточки — 300 слов",
-    subtitle: "Введи перевод на итальянский и кликни по карточке. Enter — проверить, повторный клик — следующая.",
-    langLabel: "Язык:",
-    themeLabel: "Тема:",
-    scoreLabel: "Очки: ",
-    attemptsLabel: "Попытки: ",
-    accuracyLabel: "Точность: ",
-    streakLabel: "Серия: ",
-    sourceLabel: "Русское слово",
-    clickHintUnchecked: "Кликни, чтобы проверить.",
-    clickHintChecked: "Кликни, чтобы перейти дальше.",
-    correct: "Правильно! ✅",
-    correctAnswerLabel: "Нужный ответ: ",
-    alsoAcceptedPrefix: " (также принимается: ",
-    alsoAcceptedSuffix: ")",
-    inputLabel: "Введи итальянский перевод",
-    placeholder: "например: ciao",
-    btnCheck: "Проверить (Enter)",
-    btnNext: "Дальше (→)",
-    btnSkip: "Пропустить",
-    btnReveal: "Показать ответ",
-    btnReshuffle: "Перемешать заново",
-    btnReset: "Сбросить очки/попытки/точность и начать сначала",
-    strictLabel: "Строгая проверка акцентов (è ≠ e)",
-    counter: (i, n) => `Карточка ${i} из ${n}`,
-    tips: "Советы: 1) Enter — проверить, → — следующая. 2) Клик по карточке также проверяет/листает. 3) По умолчанию акценты не обязательны (caffe засчитывается как caffè)."
-  },
-  de: {
-    title: "Italienische Karten — 300 Wörter",
-    subtitle: "Gib die italienische Übersetzung ein und klicke auf die Karte. Enter — prüfen, erneuter Klick — nächste.",
-    langLabel: "Sprache:",
-    themeLabel: "Thema:",
-    scoreLabel: "Punkte: ",
-    attemptsLabel: "Versuche: ",
-    accuracyLabel: "Genauigkeit: ",
-    streakLabel: "Serie: ",
-    sourceLabel: "Deutsches Wort",
-    clickHintUnchecked: "Klicke, um zu prüfen.",
-    clickHintChecked: "Klicke, um weiterzugehen.",
-    correct: "Richtig! ✅",
-    correctAnswerLabel: "Richtige Antwort: ",
-    alsoAcceptedPrefix: " (auch akzeptiert: ",
-    alsoAcceptedSuffix: ")",
-    inputLabel: "Gib die italienische Übersetzung ein",
-    placeholder: "z. B.: ciao",
-    btnCheck: "Prüfen (Enter)",
-    btnNext: "Weiter (→)",
-    btnSkip: "Überspringen",
-    btnReveal: "Antwort zeigen",
-    btnReshuffle: "Neu mischen",
-    btnReset: "Punkte/Versuche/Genauigkeit zurücksetzen und neu starten",
-    strictLabel: "Strenge Akzentprüfung (è ≠ e)",
-    counter: (i, n) => `Karte ${i} von ${n}`,
-    tips: "Tipps: 1) Enter — prüfen, → — nächste. 2) Klick auf die Karte prüft/blättert. 3) Standardmäßig sind Akzente optional (caffe zählt als caffè)."
-  },
-  fr: {
-    title: "Cartes italiennes — 300 mots",
-    subtitle: "Tapez la traduction italienne et cliquez sur la carte. Entrée — vérifier, cliquer encore — suivant.",
-    langLabel: "Langue :",
-    themeLabel: "Thème :",
-    scoreLabel: "Score : ",
-    attemptsLabel: "Essais : ",
-    accuracyLabel: "Précision : ",
-    streakLabel: "Série : ",
-    sourceLabel: "Mot français",
-    clickHintUnchecked: "Cliquez pour vérifier.",
-    clickHintChecked: "Cliquez pour continuer.",
-    correct: "Correct ! ✅",
-    correctAnswerLabel: "Bonne réponse : ",
-    alsoAcceptedPrefix: " (aussi accepté : ",
-    alsoAcceptedSuffix: ")",
-    inputLabel: "Entrez la traduction italienne",
-    placeholder: "par ex. : ciao",
-    btnCheck: "Vérifier (Entrée)",
-    btnNext: "Suivant (→)",
-    btnSkip: "Passer",
-    btnReveal: "Révéler",
-    btnReshuffle: "Mélanger",
-    btnReset: "Réinitialiser score/essais/précision et recommencer",
-    strictLabel: "Vérification stricte des accents (è ≠ e)",
-    counter: (i, n) => `Carte ${i} sur ${n}`,
-    tips: "Astuces : 1) Entrée — vérifier, → — suivant. 2) Cliquer sur la carte vérifie/avance. 3) Par défaut, les accents sont optionnels (caffe compte comme caffè)."
+// ==== I18N strings moved to logic/i18n.js ====
+let I18N;
+try {
+  if (typeof module !== "undefined" && module.exports && typeof require === "function") {
+    I18N = require("./logic/i18n.js");
+  } else if (typeof window !== "undefined" && window.I18N) {
+    I18N = window.I18N;
+  } else {
+    I18N = {};
   }
-};
+} catch (e) {
+  I18N = (typeof window !== "undefined" && window.I18N) ? window.I18N : {};
+}
 
 const FLAG_ICONS = {
   en: { src: "https://twemoji.maxcdn.com/v/latest/svg/1f1ec-1f1e7.svg", label: "English" },
@@ -228,35 +126,17 @@ function App() {
 
   // Localized texts for diff highlight area (visible labels and count), based on current language
   const DIFF_I18N = React.useMemo(() => {
-    const map = {
-      en: {
-        yourAnswer: "Your answer",
-        correctAnswer: "Correct answer",
-        lettersWrong: (n) => `${n} ${n === 1 ? "letter was wrong" : "letters were wrong"}`
-      },
-      de: {
-        yourAnswer: "Deine Antwort",
-        correctAnswer: "Richtige Antwort",
-        lettersWrong: (n) => `${n} ${n === 1 ? "Buchstabe war falsch" : "Buchstaben waren falsch"}`
-      },
-      ru: {
-        yourAnswer: "Ваш ответ",
-        correctAnswer: "Правильный ответ",
-        lettersWrong: (n) => {
-          const mod10 = n % 10;
-          const mod100 = n % 100;
-          if (mod10 === 1 && mod100 !== 11) return `${n} буква была неверной`;
-          if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return `${n} буквы были неверны`;
-          return `${n} букв были неверны`;
-        }
-      },
-      fr: {
-        yourAnswer: "Votre réponse",
-        correctAnswer: "Bonne réponse",
-        lettersWrong: (n) => `${n} ${n === 1 ? "lettre était incorrecte" : "lettres étaient incorrectes"}`
+    try {
+      if (I18N && typeof I18N.getDiffStrings === "function") {
+        return I18N.getDiffStrings(lang);
       }
+    } catch (e) {}
+    // Fallback to English copy if module is unavailable
+    return {
+      yourAnswer: "Your answer",
+      correctAnswer: "Correct answer",
+      lettersWrong: (n) => `${n} ${n === 1 ? "letter was wrong" : "letters were wrong"}`
     };
-    return map[lang] || map.en;
   }, [lang]);
 
   // Compute best diff against accepted answers (fewest errors)
@@ -549,7 +429,7 @@ function App() {
                     return React.createElement("span", { key: `u-${pos}`, className: "text-slate-500 bg-slate-200/70 rounded px-1 transition-colors", "data-op": op.type, "data-pos": String(pos), "aria-label": `Position ${pos}: missing '${op.b}'` }, "▯");
                   })
                 ),
-                React.createElement("div", { className: "text-xs text-slate-500 mt-3 mb-1" }, "Correct answer"),
+                React.createElement("div", { className: "text-xs text-slate-500 mt-3 mb-1" }, DIFF_I18N.correctAnswer),
                 React.createElement("div", { className: "font-mono text-base flex flex-wrap gap-1" },
                   diffResult.ops.map((op) => {
                     const pos = (op.col || 0) + 1;
