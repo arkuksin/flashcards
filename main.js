@@ -56,6 +56,20 @@ try {
   I18N = (typeof window !== "undefined" && window.I18N) ? window.I18N : {};
 }
 
+// ==== Answer checking (moved to logic/checkAnswer.js) ====
+let AnswerChecker;
+try {
+  if (typeof module !== "undefined" && module.exports && typeof require === "function") {
+    AnswerChecker = require("./logic/checkAnswer.js");
+  } else if (typeof window !== "undefined" && window.checkAnswer) {
+    AnswerChecker = window.checkAnswer;
+  } else {
+    AnswerChecker = null;
+  }
+} catch (e) {
+  AnswerChecker = (typeof window !== "undefined" && window.checkAnswer) ? window.checkAnswer : null;
+}
+
 const FLAG_ICONS = {
   en: { src: "https://twemoji.maxcdn.com/v/latest/svg/1f1ec-1f1e7.svg", label: "English" },
   de: { src: "https://twemoji.maxcdn.com/v/latest/svg/1f1e9-1f1ea.svg", label: "Deutsch" },
@@ -230,11 +244,21 @@ function App() {
 
   function checkAnswer() {
     if (checked) return;
-    const user = strictAccents ? Utils.normalize(input) : Utils.normalize(Utils.stripDiacritics(input));
-    const ok = acceptedAnswers.some((ans) => {
-      const normTarget = strictAccents ? Utils.normalize(ans) : Utils.normalize(Utils.stripDiacritics(ans));
-      return user === normTarget;
-    });
+    let ok = false;
+    if (typeof AnswerChecker === "function") {
+      try {
+        ok = !!AnswerChecker(input, acceptedAnswers, { strictAccents });
+      } catch (e) {
+        ok = false;
+      }
+    }
+    if (typeof AnswerChecker !== "function") {
+      const user = strictAccents ? Utils.normalize(input) : Utils.normalize(Utils.stripDiacritics(input));
+      ok = acceptedAnswers.some((ans) => {
+        const normTarget = strictAccents ? Utils.normalize(ans) : Utils.normalize(Utils.stripDiacritics(ans));
+        return user === normTarget;
+      });
+    }
     setIsCorrect(ok);
     setChecked(true);
     setAttempts((a) => a + 1);
@@ -247,7 +271,6 @@ function App() {
         return next;
       });
     } else {
-      // Compute best diff against first accepted answer(s)
       const best = computeBestDiff(input, acceptedAnswers, { caseInsensitive: true, ignoreDiacritics: !strictAccents });
       setDiffResult(best);
       setStreak(0);
