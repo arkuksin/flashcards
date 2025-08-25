@@ -84,6 +84,20 @@ try {
   computeBestDiff = (typeof window !== "undefined" && window.computeBestDiff) ? window.computeBestDiff : null;
 }
 
+// ==== State transitions (logic/state.js) ====
+let GameState;
+try {
+  if (typeof module !== "undefined" && module.exports && typeof require === "function") {
+    GameState = require("./logic/state.js");
+  } else if (typeof window !== "undefined" && window.GameState) {
+    GameState = window.GameState;
+  } else {
+    GameState = null;
+  }
+} catch (e) {
+  GameState = (typeof window !== "undefined" && window.GameState) ? window.GameState : null;
+}
+
 const FLAG_ICONS = {
   en: { src: "https://twemoji.maxcdn.com/v/latest/svg/1f1ec-1f1e7.svg", label: "English" },
   de: { src: "https://twemoji.maxcdn.com/v/latest/svg/1f1e9-1f1ea.svg", label: "Deutsch" },
@@ -112,6 +126,19 @@ function App() {
     return "en";
   };
   const [lang, setLang] = React.useState(detectInitialLang);
+  // Force-synchronous lang update to reduce E2E flakiness when tests immediately assert heading text
+  const setLangImmediate = (val) => {
+    try {
+      if (typeof ReactDOM !== "undefined" && typeof ReactDOM.flushSync === "function") {
+        ReactDOM.flushSync(() => setLang(val));
+      } else {
+        setLang(val);
+      }
+    } catch (e) {
+      setLang(val);
+    }
+    try { if (typeof document !== "undefined") { document.documentElement.lang = val; } } catch (e2) {}
+  };
   const t = I18N[lang] || I18N.en;
   React.useEffect(() => { try { if (typeof window !== "undefined" && window.localStorage) { window.localStorage.setItem("lang", lang); } } catch(e) {} }, [lang]);
   const DATA = React.useMemo(() => {
@@ -152,22 +179,6 @@ function App() {
   // Diff state for wrong answers (structured, rendered near input)
   const [diffResult, setDiffResult] = React.useState(null);
 
-  // Localized texts for diff highlight area (visible labels and count), based on current language
-  const DIFF_I18N = React.useMemo(() => {
-    try {
-      if (I18N && typeof I18N.getDiffStrings === "function") {
-        return I18N.getDiffStrings(lang);
-      }
-    } catch (e) {}
-    // Fallback to English copy if module is unavailable
-    return {
-      yourAnswer: "Your answer",
-      correctAnswer: "Correct answer",
-      lettersWrong: (n) => `${n} ${n === 1 ? "letter was wrong" : "letters were wrong"}`
-    };
-  }, [lang]);
-
-
   // Streak state with persistence (localStorage → sessionStorage → memory)
   const loadStreak = () => {
     try {
@@ -189,6 +200,49 @@ function App() {
   const celebrateTimeoutRef = React.useRef(null);
   const [celebrateMsg, setCelebrateMsg] = React.useState("");
   const [showCelebrate, setShowCelebrate] = React.useState(false);
+
+  // Helpers to bridge React state <-> pure GameState
+  const getGS = React.useCallback(() => ({
+    order,
+    idx,
+    input,
+    checked,
+    isCorrect,
+    points,
+    attempts,
+    strictAccents,
+    streak,
+    diffResult,
+  }), [order, idx, input, checked, isCorrect, points, attempts, strictAccents, streak, diffResult]);
+
+  const applyGS = (s) => {
+    if (!s) return;
+    if (Array.isArray(s.order)) setOrder(s.order);
+    if (typeof s.idx === 'number') setIdx(s.idx);
+    if (typeof s.input === 'string') setInput(s.input);
+    if (typeof s.checked === 'boolean') setChecked(s.checked);
+    if (typeof s.isCorrect === 'boolean') setIsCorrect(s.isCorrect);
+    if (typeof s.points === 'number') setPoints(s.points);
+    if (typeof s.attempts === 'number') setAttempts(s.attempts);
+    if (s.diffResult !== undefined) setDiffResult(s.diffResult);
+    if (typeof s.streak === 'number') setStreak(s.streak);
+  };
+
+  // Localized texts for diff highlight area (visible labels and count), based on current language
+  const DIFF_I18N = React.useMemo(() => {
+    try {
+      if (I18N && typeof I18N.getDiffStrings === "function") {
+        return I18N.getDiffStrings(lang);
+      }
+    } catch (e) {}
+    // Fallback to English copy if module is unavailable
+    return {
+      yourAnswer: "Your answer",
+      correctAnswer: "Correct answer",
+      lettersWrong: (n) => `${n} ${n === 1 ? "letter was wrong" : "letters were wrong"}`
+    };
+  }, [lang]);
+
 
   const persistStreak = React.useCallback((val) => {
     const s = String(Math.max(0, val|0));
@@ -223,13 +277,17 @@ function App() {
 
   // Reset deck and stats when theme changes
   React.useEffect(() => {
-    setOrder(Utils.shuffle(poolIndices));
-    setIdx(0);
-    setInput("");
-    setChecked(false);
-    setIsCorrect(false);
-    setPoints(0);
-    setAttempts(0);
+    if (GameState && typeof GameState.reshuffle === "function") {
+      applyGS(GameState.reshuffle(getGS(), { poolIndices }));
+    } else {
+      setOrder(Utils.shuffle(poolIndices));
+      setIdx(0);
+      setInput("");
+      setChecked(false);
+      setIsCorrect(false);
+      setPoints(0);
+      setAttempts(0);
+    }
     inputRef.current?.focus();
   }, [poolIndices]);
 
@@ -243,11 +301,7 @@ function App() {
     if (checked) return;
     let ok = false;
     if (typeof AnswerChecker === "function") {
-      try {
-        ok = !!AnswerChecker(input, acceptedAnswers, { strictAccents });
-      } catch (e) {
-        ok = false;
-      }
+      try { ok = !!AnswerChecker(input, acceptedAnswers, { strictAccents }); } catch (e) { ok = false; }
     }
     if (typeof AnswerChecker !== "function") {
       const user = strictAccents ? Utils.normalize(input) : Utils.normalize(Utils.stripDiacritics(input));
@@ -256,36 +310,83 @@ function App() {
         return user === normTarget;
       });
     }
-    setIsCorrect(ok);
-    setChecked(true);
-    setAttempts((a) => a + 1);
-    if (ok) {
-      setPoints((p) => p + 1);
-      setDiffResult(null);
-      setStreak((s) => {
-        const next = s + 1;
-        triggerCelebration(next);
-        return next;
-      });
+    let best = null;
+    if (!ok && typeof computeBestDiff === "function") {
+      best = computeBestDiff(input, acceptedAnswers, { caseInsensitive: true, ignoreDiacritics: !strictAccents });
+    }
+    if (GameState && typeof GameState.applyCheckResult === "function") {
+      const s2 = GameState.applyCheckResult(getGS(), { ok, diffResult: best });
+      applyGS(s2);
+      if (ok) {
+        triggerCelebration(s2.streak);
+      } else {
+        lastCelebratedRef.current = 0;
+      }
     } else {
-      const best = computeBestDiff(input, acceptedAnswers, { caseInsensitive: true, ignoreDiacritics: !strictAccents });
-      setDiffResult(best);
-      setStreak(0);
-      lastCelebratedRef.current = 0; // allow future celebrations at 10,20,... after a reset
+      // Fallback to previous inline behavior
+      setIsCorrect(ok);
+      setChecked(true);
+      setAttempts((a) => a + 1);
+      if (ok) {
+        setPoints((p) => p + 1);
+        setDiffResult(null);
+        setStreak((s) => {
+          const next = s + 1;
+          triggerCelebration(next);
+          return next;
+        });
+      } else {
+        setDiffResult(best);
+        setStreak(0);
+        lastCelebratedRef.current = 0; // allow future celebrations at 10,20,... after a reset
+      }
     }
   }
 
   function nextCard() {
-    const next = idx + 1;
-    if (next >= order.length) { setOrder(Utils.shuffle(poolIndices)); setIdx(0); }
-    else { setIdx(next); }
-    setInput(""); setChecked(false); setIsCorrect(false); setDiffResult(null); inputRef.current?.focus();
+    if (GameState && typeof GameState.nextCard === "function") {
+      applyGS(GameState.nextCard(getGS(), { poolIndices }));
+    } else {
+      const next = idx + 1;
+      if (next >= order.length) { setOrder(Utils.shuffle(poolIndices)); setIdx(0); }
+      else { setIdx(next); }
+      setInput(""); setChecked(false); setIsCorrect(false); setDiffResult(null);
+    }
+    inputRef.current?.focus();
   }
 
-  const skipCard = () => { setAttempts((a) => a + 1); setDiffResult(null); nextCard(); };
-  const reveal = () => { setInput(acceptedAnswers[0] || ""); setChecked(true); setIsCorrect(false); setAttempts((a) => a + 1); setStreak(0); lastCelebratedRef.current = 0; setDiffResult(null); };
-  const reshuffle = () => { setOrder(Utils.shuffle(poolIndices)); setIdx(0); setInput(""); setChecked(false); setIsCorrect(false); setPoints(0); setAttempts(0); setDiffResult(null); };
-  const resetStats = () => { setIdx(0); setInput(""); setChecked(false); setIsCorrect(false); setPoints(0); setAttempts(0); setDiffResult(null); inputRef.current?.focus(); };
+  const skipCard = () => {
+    if (GameState && typeof GameState.skipCard === "function") {
+      applyGS(GameState.skipCard(getGS(), { poolIndices }));
+    } else {
+      setAttempts((a) => a + 1); setDiffResult(null); nextCard();
+      return;
+    }
+    inputRef.current?.focus();
+  };
+  const reveal = () => {
+    if (GameState && typeof GameState.reveal === "function") {
+      applyGS(GameState.reveal(getGS(), { acceptedAnswers }));
+    } else {
+      setInput(acceptedAnswers[0] || ""); setChecked(true); setIsCorrect(false); setAttempts((a) => a + 1); setStreak(0); setDiffResult(null);
+    }
+    lastCelebratedRef.current = 0;
+  };
+  const reshuffle = () => {
+    if (GameState && typeof GameState.reshuffle === "function") {
+      applyGS(GameState.reshuffle(getGS(), { poolIndices }));
+    } else {
+      setOrder(Utils.shuffle(poolIndices)); setIdx(0); setInput(""); setChecked(false); setIsCorrect(false); setPoints(0); setAttempts(0); setDiffResult(null);
+    }
+  };
+  const resetStats = () => {
+    if (GameState && typeof GameState.resetStats === "function") {
+      applyGS(GameState.resetStats(getGS()));
+    } else {
+      setIdx(0); setInput(""); setChecked(false); setIsCorrect(false); setPoints(0); setAttempts(0); setDiffResult(null);
+    }
+    inputRef.current?.focus();
+  };
 
   function onCardClick() {
     if (!checked) { if (!input.trim()) return inputRef.current?.focus(); checkAnswer(); }
@@ -325,7 +426,7 @@ function App() {
                     {
                       key: opt.code,
                       type: "button",
-                      onClick: () => setLang(opt.code),
+                      onClick: () => setLangImmediate(opt.code),
                       className: `px-1.5 py-1 rounded-full border ${lang === opt.code ? "border-sky-500 bg-sky-50" : "border-slate-300 bg-white hover:bg-slate-50"}`,
                       title: `${FLAG_ICONS[opt.code].label} → IT`,
                       "aria-label": `${FLAG_ICONS[opt.code].label} → IT`,
@@ -346,7 +447,7 @@ function App() {
                 "select",
                 {
                   value: lang,
-                  onChange: (e) => setLang(e.target.value),
+                  onChange: (e) => setLangImmediate(e.target.value),
                   className: "text-sm rounded-lg border border-slate-300 px-2 py-1 bg-white",
                   "data-testid": "lang-select"
                 },
