@@ -45,6 +45,46 @@ function shuffle(array) {
   return a;
 }
 
+// Lightweight POS detection based on Italian answers
+function detectPosItalian(answers) {
+  try {
+    const irregularVerbs = new Set([
+      "essere","avere","stare","andare","venire","fare","dire","dare",
+      "potere","volere","dovere","sapere","uscire","rimanere","tenere","bere","piacere"
+    ]);
+    const knownAdjectives = new Set([
+      // colors and common adjectives present in datasets
+      "bianco","nero","rosso","blu","azzurro","verde","giallo","arancione","rosa","viola","marrone","grigio",
+      "beige","scuro","chiaro","celeste","cremisi","turchese",
+      "caro","economico","caldo","freddo"
+    ]);
+    const tokens = answers
+      .flatMap((ans) => String(ans || "").split(/[\/,|]/).map((s) => s.trim()).filter(Boolean))
+      .flatMap((ans) => ans.split(/\s+/).map((s) => normalize(stripDiacritics(s))))
+      .filter(Boolean);
+
+    // Verb: any token looks like an infinitive or is irregular
+    if (tokens.some((t) => /(are|ere|ire)$/.test(t) || irregularVerbs.has(t))) return "verb";
+
+    // Adjective: token in known set
+    if (tokens.some((t) => knownAdjectives.has(t))) return "adj";
+
+    // If any answer contains spaces (phrases), do not force as noun
+    const hasPhrase = answers.some((a) => /\s/.test(String(a || "")));
+    if (hasPhrase) return null;
+
+    // Default to noun for single-token non-verb non-adjective entries
+    return "noun";
+  } catch (e) {
+    return null;
+  }
+}
+
+function classifyEntry(entry) {
+  if (!entry || !Array.isArray(entry.it)) return null;
+  return detectPosItalian(entry.it);
+}
+
 // ==== I18N strings for EN, RU, DE, FR UI ====
 const I18N = {
   en: {
@@ -52,6 +92,11 @@ const I18N = {
     subtitle: "Type the Italian translation and click the card. Enter — check, click again — next.",
     langLabel: "Language:",
     themeLabel: "Theme:",
+    posLabel: "Part of speech:",
+    posAll: "All",
+    posNouns: "Nouns",
+    posVerbs: "Verbs",
+    posAdjectives: "Adjectives",
     scoreLabel: "Score: ",
     attemptsLabel: "Attempts: ",
     accuracyLabel: "Accuracy: ",
@@ -80,6 +125,11 @@ const I18N = {
     subtitle: "Введи перевод на итальянский и кликни по карточке. Enter — проверить, повторный клик — следующая.",
     langLabel: "Язык:",
     themeLabel: "Тема:",
+    posLabel: "Часть речи:",
+    posAll: "Все",
+    posNouns: "Существительные",
+    posVerbs: "Глаголы",
+    posAdjectives: "Прилагательные",
     scoreLabel: "Очки: ",
     attemptsLabel: "Попытки: ",
     accuracyLabel: "Точность: ",
@@ -108,6 +158,11 @@ const I18N = {
     subtitle: "Gib die italienische Übersetzung ein und klicke auf die Karte. Enter — prüfen, erneuter Klick — nächste.",
     langLabel: "Sprache:",
     themeLabel: "Thema:",
+    posLabel: "Wortart:",
+    posAll: "Alle",
+    posNouns: "Substantive",
+    posVerbs: "Verben",
+    posAdjectives: "Adjektive",
     scoreLabel: "Punkte: ",
     attemptsLabel: "Versuche: ",
     accuracyLabel: "Genauigkeit: ",
@@ -136,6 +191,11 @@ const I18N = {
     subtitle: "Tapez la traduction italienne et cliquez sur la carte. Entrée — vérifier, cliquer encore — suivant.",
     langLabel: "Langue :",
     themeLabel: "Thème :",
+    posLabel: "Catégorie :",
+    posAll: "Tous",
+    posNouns: "Noms",
+    posVerbs: "Verbes",
+    posAdjectives: "Adjectifs",
     scoreLabel: "Score : ",
     attemptsLabel: "Essais : ",
     accuracyLabel: "Précision : ",
@@ -208,14 +268,19 @@ function App() {
   }, [DATA.THEMES, lang, WORDS_LOCAL.length]);
   React.useEffect(() => { if (typeof document !== "undefined") { document.title = t.title; document.documentElement.lang = lang; } }, [lang, t.title]);
   const [themeKey, setThemeKey] = React.useState("all");
+  const [posFilter, setPosFilter] = React.useState("all"); // all | nouns | verbs | adjectives
   React.useEffect(() => { setThemeKey("all"); }, [lang]);
   const poolIndices = React.useMemo(() => {
     const th = THEMES_LOCAL.find((x) => x.key === themeKey) || THEMES_LOCAL[0];
-    if (th.key === "all") return [...Array(WORDS_LOCAL.length).keys()];
-    const arr = [];
-    for (let i = th.start; i < th.start + th.count; i++) arr.push(i);
-    return arr;
-  }, [themeKey, THEMES_LOCAL, WORDS_LOCAL]);
+    const base = (th.key === "all") ? [...Array(WORDS_LOCAL.length).keys()] : (() => {
+      const arr = []; for (let i = th.start; i < th.start + th.count; i++) arr.push(i); return arr;
+    })();
+    // Apply POS filter
+    const mapPos = { nouns: "noun", verbs: "verb", adjectives: "adj" };
+    if (posFilter === "all") return base;
+    const filtered = base.filter((i) => classifyEntry(WORDS_LOCAL[i]) === mapPos[posFilter]);
+    return filtered.length > 0 ? filtered : base; // fallback if empty
+  }, [themeKey, THEMES_LOCAL, WORDS_LOCAL, posFilter]);
 
   const [order, setOrder] = React.useState(() => shuffle(poolIndices));
   const [idx, setIdx] = React.useState(0);
@@ -470,6 +535,22 @@ function App() {
                   "data-testid": "theme-select"
                 },
                 THEMES_LOCAL.map((th) => React.createElement("option", { key: th.key, value: th.key }, th.name))
+              ),
+              React.createElement("label", { className: "text-xs text-slate-600" }, t.posLabel),
+              React.createElement(
+                "select",
+                {
+                  value: posFilter,
+                  onChange: (e) => setPosFilter(e.target.value),
+                  className: "text-sm rounded-lg border border-slate-300 px-2 py-1 bg-white",
+                  "data-testid": "pos-select"
+                },
+                [
+                  React.createElement("option", { key: "all", value: "all" }, t.posAll),
+                  React.createElement("option", { key: "nouns", value: "nouns" }, t.posNouns),
+                  React.createElement("option", { key: "verbs", value: "verbs" }, t.posVerbs),
+                  React.createElement("option", { key: "adjectives", value: "adjectives" }, t.posAdjectives)
+                ]
               )
             )
           ),
