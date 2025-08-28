@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Italian Flashcards — 300 Words</title>
     <link rel="icon" href="./assets/icons/favicon.ico" type="image/x-icon" />
+    <!-- Google Font: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Centralized color system: CSS variables and helper utilities -->
     <style>
@@ -16,6 +18,8 @@
         --color-success: #16a34a;   /* Tailwind green-600 */
         --color-error: #e11d48;     /* Tailwind rose-600 */
       }
+      /* Base typography */
+      html, body { font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"; line-height: 1.5; }
       /* Utility helpers mapped to the variables (Tailwind-like names) */
       .bg-bg { background-color: var(--color-bg); }
       .bg-surface { background-color: var(--color-surface); }
@@ -36,6 +40,12 @@
         --tw-gradient-to: rgb(2 132 199 / 0);
         --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
       }
+      /* Typography helpers aligned to Tailwind scales */
+      .h1 { font-size: 2.25rem; line-height: 2.5rem; font-weight: 700; }
+      @media (min-width: 768px) { .h1 { font-size: 3rem; line-height: 1; } }
+      .h2 { font-size: 1.5rem; line-height: 2rem; font-weight: 600; }
+      @media (min-width: 768px) { .h2 { font-size: 1.875rem; line-height: 2.25rem; } }
+      .body { font-size: 1rem; line-height: 1.625; }
     </style>
     <!-- Vercel Web Analytics (cookieless) for non-Next static sites -->
     <script>
