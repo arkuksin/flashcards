@@ -470,12 +470,12 @@ function App() {
   const accuracy = attempts ? Math.round((points / attempts) * 100) : 0;
 
   return (
-    React.createElement("div", { className: "min-h-screen bg-slate-50 text-slate-900 flex flex-col items-center py-8 px-4" },
+    React.createElement("div", { className: "min-h-screen bg-bg text-slate-900 flex flex-col items-center py-8 px-4" },
       React.createElement("div", { className: "w-full max-w-3xl" },
-        React.createElement("header", { className: "mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between", "data-testid": "header" },
+        React.createElement("header", { className: "mb-6 bg-gradient-to-br from-primary to-indigo-600 text-white rounded-2xl p-4 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between", "data-testid": "header" },
           React.createElement("div", null,
             React.createElement("h1", { className: "text-2xl sm:text-3xl font-bold tracking-tight", role: "heading", "aria-level": 1 }, t.title),
-            React.createElement("p", { className: "text-sm text-slate-600" }, t.subtitle),
+            React.createElement("p", { className: "text-sm text-white/80" }, t.subtitle),
             React.createElement("div", { className: "mt-2 flex flex-wrap items-center gap-3" },
               React.createElement("label", { className: "text-xs text-slate-600" }, t.langLabel),
               // Flag buttons (extra option)
@@ -556,10 +556,10 @@ function App() {
             )
           ),
           React.createElement("div", { className: "flex gap-3 text-sm" },
-            React.createElement("div", { className: "bg-white rounded-xl shadow px-3 py-2", "data-testid": "score", "data-value": String(points) }, t.scoreLabel, React.createElement("b", null, points)),
-            React.createElement("div", { className: "bg-white rounded-xl shadow px-3 py-2", "data-testid": "attempts", "data-value": String(attempts) }, t.attemptsLabel, React.createElement("b", null, attempts)),
-            React.createElement("div", { className: "bg-white rounded-xl shadow px-3 py-2", "data-testid": "accuracy", "data-value": String(accuracy) }, t.accuracyLabel, React.createElement("b", null, accuracy), "%"),
-            React.createElement("div", { className: "bg-white rounded-xl shadow px-3 py-2", "data-testid": "streak", "data-value": String(streak), role: "status", "aria-live": "polite" }, t.streakLabel, React.createElement("b", null, streak))
+            React.createElement("div", { className: "bg-surface rounded-xl shadow px-3 py-2", "data-testid": "score", "data-value": String(points) }, t.scoreLabel, React.createElement("b", null, points)),
+            React.createElement("div", { className: "bg-surface rounded-xl shadow px-3 py-2", "data-testid": "attempts", "data-value": String(attempts) }, t.attemptsLabel, React.createElement("b", null, attempts)),
+            React.createElement("div", { className: "bg-surface rounded-xl shadow px-3 py-2", "data-testid": "accuracy", "data-value": String(accuracy) }, t.accuracyLabel, React.createElement("b", null, accuracy), "%"),
+            React.createElement("div", { className: "bg-surface rounded-xl shadow px-3 py-2", "data-testid": "streak", "data-value": String(streak), role: "status", "aria-live": "polite" }, t.streakLabel, React.createElement("b", null, streak))
           )
         ),
         // Celebration toast (non-blocking)
@@ -577,7 +577,7 @@ function App() {
           React.createElement("div", {
             className: `select-none cursor-pointer rounded-3xl p-8 shadow-lg transition border ${
               checked ? (isCorrect ? "bg-green-50 border-green-300" : "bg-rose-50 border-rose-300")
-                      : "bg-white border-slate-200 hover:shadow-xl"
+                      : "bg-surface border-slate-200 hover:shadow-xl"
             }`,
             onClick: onCardClick, role: "button", tabIndex: 0, onKeyDown: (e) => e.key === "Enter" && onCardClick(),
             "data-testid": "card",
@@ -597,7 +597,7 @@ function App() {
                   )
             )
           ),
-          React.createElement("div", { className: "bg-white rounded-3xl p-5 shadow border border-slate-200" },
+          React.createElement("div", { className: "bg-surface rounded-3xl p-5 shadow border border-slate-200" },
             React.createElement("label", { className: "block text-sm text-slate-600 mb-2" }, t.inputLabel),
             React.createElement("input", {
               ref: inputRef, value: input, onChange: (e) => setInput(e.target.value), onKeyDown: handleKeyDown,
@@ -607,11 +607,11 @@ function App() {
               "data-testid": "answer-input"
             }),
             React.createElement("div", { className: "mt-3 flex flex-wrap gap-2" },
-              React.createElement("button", { onClick: checkAnswer, className: "px-4 py-2 rounded-xl bg-sky-600 text-white hover:bg-sky-700 active:translate-y-px", "data-testid": "btn-check" }, t.btnCheck),
-              React.createElement("button", { onClick: nextCard, className: "px-4 py-2 rounded-xl bg-slate-800 text-white hover:bg-slate-900 active:translate-y-px", "data-testid": "btn-next" }, t.btnNext),
+              React.createElement("button", { onClick: checkAnswer, className: "px-4 py-2 rounded-xl bg-primary text-white hover:opacity-90 active:translate-y-px", "data-testid": "btn-check" }, t.btnCheck),
+              React.createElement("button", { onClick: nextCard, className: "px-4 py-2 rounded-xl bg-secondary text-white hover:opacity-90 active:translate-y-px", "data-testid": "btn-next" }, t.btnNext),
               React.createElement("button", { onClick: skipCard, className: "px-4 py-2 rounded-xl bg-amber-500 text-white hover:bg-amber-600 active:translate-y-px", "data-testid": "btn-skip" }, t.btnSkip),
-              React.createElement("button", { onClick: reveal, className: "px-4 py-2 rounded-xl bg-rose-500 text-white hover:bg-rose-600 active:translate-y-px", "data-testid": "btn-reveal" }, t.btnReveal),
-              React.createElement("button", { onClick: reshuffle, className: "px-4 py-2 rounded-xl bg-green-600 text-white hover:bg-green-700 active:translate-y-px", "data-testid": "btn-reshuffle" }, t.btnReshuffle),
+              React.createElement("button", { onClick: reveal, className: "px-4 py-2 rounded-xl bg-error text-white hover:opacity-90 active:translate-y-px", "data-testid": "btn-reveal" }, t.btnReveal),
+              React.createElement("button", { onClick: reshuffle, className: "px-4 py-2 rounded-xl bg-success text-white hover:opacity-90 active:translate-y-px", "data-testid": "btn-reshuffle" }, t.btnReshuffle),
               React.createElement("button", { onClick: resetStats, className: "px-4 py-2 rounded-xl bg-slate-200 text-slate-800 hover:bg-slate-300 active:translate-y-px", "data-testid": "btn-reset" }, t.btnReset)
             ),
             (checked && !isCorrect && diffResult) ? React.createElement("div", { className: "mt-4", "data-testid": "diff-feedback", role: "status", "aria-live": "polite", "data-errors": String(diffResult.summary.totalErrors) },

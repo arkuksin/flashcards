@@ -6,13 +6,44 @@
     <title>Italian Flashcards — 300 Words</title>
     <link rel="icon" href="./assets/icons/favicon.ico" type="image/x-icon" />
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Centralized color system: CSS variables and helper utilities -->
+    <style>
+      :root {
+        --color-primary: #0284c7;   /* Tailwind sky-600 */
+        --color-secondary: #1e293b; /* Tailwind slate-800 */
+        --color-bg: #f8fafc;        /* Tailwind slate-50 */
+        --color-surface: #ffffff;   /* White */
+        --color-success: #16a34a;   /* Tailwind green-600 */
+        --color-error: #e11d48;     /* Tailwind rose-600 */
+      }
+      /* Utility helpers mapped to the variables (Tailwind-like names) */
+      .bg-bg { background-color: var(--color-bg); }
+      .bg-surface { background-color: var(--color-surface); }
+      .bg-primary { background-color: var(--color-primary); }
+      .bg-secondary { background-color: var(--color-secondary); }
+      .bg-success { background-color: var(--color-success); }
+      .bg-error { background-color: var(--color-error); }
+
+      .text-primary { color: var(--color-primary); }
+      .text-secondary { color: var(--color-secondary); }
+      .text-success { color: var(--color-success); }
+      .text-error { color: var(--color-error); }
+
+      /* Gradient helper to integrate with Tailwind's gradient system */
+      .from-primary {
+        /* Integrates with Tailwind's gradient system on CDN runtime */
+        --tw-gradient-from: var(--color-primary);
+        --tw-gradient-to: rgb(2 132 199 / 0);
+        --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+      }
+    </style>
     <!-- Vercel Web Analytics (cookieless) for non-Next static sites -->
     <script>
       window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
     </script>
     <script defer src="/_vercel/analytics/script.js"></script>
   </head>
-  <body class="bg-slate-50">
+  <body class="bg-bg">
     <nav class="bg-white border-b border-slate-200">
       <div class="max-w-5xl mx-auto px-4 py-2 flex items-center gap-4 text-sm">
         <a href="./index.html" class="text-slate-700 hover:text-slate-900 font-medium">Word Learning</a>

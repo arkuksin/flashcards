@@ -76,6 +76,28 @@ The app provides these themes (names are localized per chosen UI language):
 
 Note: If a chosen dataset doesn’t define THEMES, the app automatically creates the All words theme covering all available words.
 
+## Color system (Tailwind CDN)
+A small palette is centralized via CSS variables in `index.html` and minimal helper utilities:
+
+- CSS variables (in :root):
+  - `--color-primary: #0284c7` (sky-600)
+  - `--color-secondary: #1e293b` (slate-800)
+  - `--color-bg: #f8fafc` (slate-50)
+  - `--color-surface: #ffffff` (white)
+  - `--color-success: #16a34a` (green-600)
+  - `--color-error: #e11d48` (rose-600)
+
+- Utility helpers (global):
+  - Backgrounds: `bg-bg`, `bg-surface`, `bg-primary`, `bg-secondary`, `bg-success`, `bg-error`
+  - Text: `text-primary`, `text-secondary`, `text-success`, `text-error`
+  - Gradient source color: `from-primary` (works with Tailwind gradients, e.g., `bg-gradient-to-br from-primary to-indigo-600`).
+
+How to change the palette:
+- Edit the variable values inside `<style> :root { ... } </style>` in `index.html`.
+- Components use the helpers above, so colors update automatically. The top header uses a soft gradient: `bg-gradient-to-br from-primary to-indigo-600`.
+
+Note: Grammar page uses the default Tailwind palette; you can copy the same `<style>` block to `grammar.html` if you want consistent theming there as well.
+
 ## Tests
 Unit tests (Node.js):
 - Requires Node.js 16+.
