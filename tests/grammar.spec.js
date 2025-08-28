@@ -34,6 +34,9 @@ test.describe('Grammar — Comparatives & Superlatives', () => {
   test('Multiple choice: picks the correct option', async ({ page }) => {
     await selectLang(page, 'en');
     await page.selectOption('[data-testid="mode-select"]', 'mc');
+    // Wait for MC container and at least one option to be attached
+    await page.locator('[data-testid="mc-container"]').waitFor({ state: 'attached', timeout: 15000 });
+    await page.locator('[data-testid^="option-"]').first().waitFor({ state: 'attached', timeout: 15000 });
     const base = await page.locator('[data-testid="base-word"]').textContent();
     const prompt = await page.locator('[data-testid="prompt"]').textContent();
     const expected = await page.evaluate(([b, p]) => {
@@ -41,14 +44,18 @@ test.describe('Grammar — Comparatives & Superlatives', () => {
       return p.includes('comparative') ? comp : sup;
     }, [base, prompt]);
     const count = await page.locator('[data-testid^="option-"]').count();
+    let clicked = false;
     for (let i = 0; i < count; i++) {
       const opt = page.locator(`[data-testid="option-${i}"]`);
-      const txt = await opt.textContent();
-      if (txt.trim() === expected) {
+      const txt = (await opt.textContent()) || '';
+      const label = txt.replace(/^\s*\d+\.\s*/, '').trim();
+      if (label === expected) {
         await opt.click();
+        clicked = true;
         break;
       }
     }
+    expect(clicked).toBeTruthy();
     await expect(page.locator('[data-testid="feedback"]').first()).toHaveAttribute('data-correct', 'true');
   });
 
@@ -154,6 +161,10 @@ test2.describe('Grammar — Shortcuts', () => {
   test2('Multiple-choice: number key selects correct option', async ({ page }) => {
     await page.selectOption('[data-testid="lang-select"]', 'en');
     await page.selectOption('[data-testid="mode-select"]', 'mc');
+    // Wait for MC container and at least one option to be attached
+    await page.locator('[data-testid="mc-container"]').waitFor({ state: 'attached', timeout: 15000 });
+    await page.locator('[data-testid^="option-"]').first().waitFor({ state: 'attached', timeout: 15000 });
+    await expect2(page.locator('[data-testid="base-word"]')).toBeVisible();
     const base = (await page.locator('[data-testid="base-word"]').textContent()).trim();
     const prompt = (await page.locator('[data-testid="prompt"]').textContent()).trim();
     const expected = await page.evaluate(([b, p]) => {
@@ -163,6 +174,10 @@ test2.describe('Grammar — Shortcuts', () => {
 
     const opts = await page.locator('[data-testid^="option-"]').allTextContents();
     const idx = opts.findIndex(t => t.replace(/^\s*\d+\.\s*/, '').trim() === expected);
+
+    // Blur any focused <select> to ensure window-level keydown receives the digit
+    await page.locator('[data-testid="base-word"]').click();
+
     // Press the corresponding number (1-based)
     await page.keyboard.press(String(idx + 1));
     await expect2(page.locator('[data-testid="feedback"]').first()).toHaveAttribute('data-correct', 'true');

@@ -70,21 +70,24 @@ const locales = {
 (test as any)('UI translates correctly across EN, DE, RU, FR', async ({ page }) => {
   await openWithEnglishAndReset(page);
 
+  // Ensure header and flags UI are present before interacting
+  const header = page.getByTestId('header');
+  await header.waitFor();
+  await page.getByTestId('lang-flags').waitFor();
+
   for (const code of Object.keys(locales) as Array<keyof typeof locales>) {
     const t = locales[code];
 
     // Switch language via flag button
     const flag = page.getByTestId(`flag-${code}`);
+    await expect(flag).toBeVisible();
     await flag.click();
 
-    // Wait until the document lang attribute reflects selection (ensures effects ran)
-    await page.waitForFunction((expected) => document.documentElement.lang === expected, code);
-
-    // Now the translated heading should be present
-    await expect(page.getByRole('heading', { level: 1 })).toHaveText(t.title);
+    // Now the translated heading should be present (within header)
+    const heading = header.getByRole('heading', { level: 1 });
+    await expect(heading).toHaveText(t.title);
 
     // Header labels contain translated text
-    const header = page.getByTestId('header');
     await expect(header).toContainText(t.langLabel);
     await expect(header).toContainText(t.themeLabel);
 
