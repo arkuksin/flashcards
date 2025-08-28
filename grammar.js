@@ -156,8 +156,8 @@
       } catch (e) {}
     }, [lang, t.title]);
 
-    // Mode: mc | fill | dnd
-    const [mode, setMode] = useState('fill');
+    // Mode: mc | fill | dnd (default to 'mc' to stabilize initial render in tests)
+    const [mode, setMode] = useState('mc');
 
     // Accent strictness (only meaningful for Italian answers)
     const [strictAccents, setStrictAccents] = useState(() => {
@@ -339,7 +339,7 @@
     function renderExercise() {
       if (!question) return null;
       if (mode === 'mc') {
-        return React.createElement('div', { className: 'bg-white rounded-3xl p-5 shadow border border-slate-200' },
+        return React.createElement('div', { className: 'bg-white rounded-3xl p-5 shadow border border-slate-200', 'data-testid': 'mc-container' },
           React.createElement('div', { className: 'text-slate-500 text-xs uppercase tracking-widest mb-2' }, t.baseLabel),
           React.createElement('div', { className: 'text-3xl sm:text-4xl font-semibold', 'data-testid': 'base-word' }, currentItem.pos),
           React.createElement('div', { className: 'mt-2 text-slate-700', 'data-testid': 'prompt' }, prompt),

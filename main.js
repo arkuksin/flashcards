@@ -412,7 +412,8 @@ function App() {
 
   const sourceWord = (current && (current[lang] || current.en || current.de || current.ru || current.fr)) || "";
   const acceptedAnswers = React.useMemo(() => {
-    const raw = current.it.flatMap((ans) => String(ans).split(/[\/|,]/).map((s) => s.trim()).filter(Boolean));
+    const list = Array.isArray(current && current.it) ? current.it : [];
+    const raw = list.flatMap((ans) => String(ans).split(/[\/|,]/).map((s) => s.trim()).filter(Boolean));
     return Array.from(new Set(raw));
   }, [current]);
 
@@ -473,7 +474,7 @@ function App() {
       React.createElement("div", { className: "w-full max-w-3xl" },
         React.createElement("header", { className: "mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between", "data-testid": "header" },
           React.createElement("div", null,
-            React.createElement("h1", { className: "text-2xl sm:text-3xl font-bold tracking-tight" }, t.title),
+            React.createElement("h1", { className: "text-2xl sm:text-3xl font-bold tracking-tight", role: "heading", "aria-level": 1 }, t.title),
             React.createElement("p", { className: "text-sm text-slate-600" }, t.subtitle),
             React.createElement("div", { className: "mt-2 flex flex-wrap items-center gap-3" },
               React.createElement("label", { className: "text-xs text-slate-600" }, t.langLabel),
