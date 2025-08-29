@@ -396,6 +396,7 @@ function App() {
   const current = React.useMemo(() => WORDS_LOCAL[order[idx]], [order, idx, WORDS_LOCAL]);
   const inputRef = React.useRef(null);
 
+  React.useEffect(() => { inputRef.current?.focus(); }, []);
   React.useEffect(() => { inputRef.current?.focus(); }, [idx]);
 
   // Reset deck and stats when theme changes
@@ -471,12 +472,12 @@ function App() {
 
   return (
     React.createElement("div", { className: "min-h-screen bg-bg text-slate-900 flex flex-col items-center py-8 px-4" },
-      React.createElement("div", { className: "w-full max-w-3xl" },
-        React.createElement("header", { className: "mb-6 bg-gradient-to-br from-primary to-indigo-600 text-white rounded-2xl p-4 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between", "data-testid": "header" },
-          React.createElement("div", null,
-            React.createElement("h1", { className: "h1 tracking-tight", role: "heading", "aria-level": 1 }, t.title),
-            React.createElement("p", { className: "text-sm text-white/80" }, t.subtitle),
-            React.createElement("div", { className: "mt-2 flex flex-wrap items-center gap-3" },
+      React.createElement("div", { className: "w-full max-w-3xl mx-auto" },
+        React.createElement("header", { className: "mb-6 overflow-hidden bg-gradient-to-br from-primary to-indigo-600 text-white rounded-3xl ring-1 ring-white/20 pt-10 md:pt-14 pb-8 md:pb-10 px-4 flex flex-col gap-4", "data-testid": "header" },
+          React.createElement("div", { className: "max-w-xl space-y-4 text-white drop-shadow-sm" },
+            React.createElement("h1", { className: "h1 tracking-tight drop-shadow-sm", role: "heading", "aria-level": 1 }, t.title),
+            React.createElement("p", { className: "text-sm text-white/80 drop-shadow-sm" }, t.subtitle),
+            React.createElement("div", { className: "flex flex-wrap items-center gap-3" },
               React.createElement("label", { className: "text-xs text-white/80" }, t.langLabel),
               // Flag buttons (extra option)
               React.createElement(
@@ -555,11 +556,26 @@ function App() {
               )
             )
           ),
-          React.createElement("div", { className: "flex gap-3 text-sm" },
-            React.createElement("div", { className: "bg-surface rounded-xl shadow px-3 py-2 text-slate-900", "data-testid": "score", "data-value": String(points) }, t.scoreLabel, React.createElement("b", null, points)),
-            React.createElement("div", { className: "bg-surface rounded-xl shadow px-3 py-2 text-slate-900", "data-testid": "attempts", "data-value": String(attempts) }, t.attemptsLabel, React.createElement("b", null, attempts)),
-            React.createElement("div", { className: "bg-surface rounded-xl shadow px-3 py-2 text-slate-900", "data-testid": "accuracy", "data-value": String(accuracy) }, t.accuracyLabel, React.createElement("b", null, accuracy), "%"),
-            React.createElement("div", { className: "bg-surface rounded-xl shadow px-3 py-2 text-slate-900", "data-testid": "streak", "data-value": String(streak), role: "status", "aria-live": "polite" }, t.streakLabel, React.createElement("b", null, streak))
+          React.createElement("section", { className: "mt-4 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4", "data-testid": "themes-grid" },
+            THEMES_LOCAL.map((th) => (
+              React.createElement("button", {
+                key: th.key,
+                type: "button",
+                onClick: () => setThemeKey(th.key),
+                className: `w-28 h-28 md:w-32 md:h-32 rounded-2xl bg-white/80 dark:bg-white/10 shadow hover:shadow-lg transition p-3 text-center shrink-0 ${themeKey === th.key ? 'ring-2 ring-white/60' : ''}`,
+                "aria-pressed": themeKey === th.key ? 'true' : 'false',
+                "data-testid": `theme-card-${th.key}`
+              },
+                React.createElement("div", { className: "font-medium text-slate-900" }, th.name),
+                React.createElement("div", { className: "text-xs text-slate-500 mt-1" }, th.key === 'all' ? `${WORDS_LOCAL.length} words` : `${th.count} words`)
+              )
+            ))
+          ),
+          React.createElement("div", { className: "flex flex-wrap gap-2" },
+            React.createElement("div", { className: "bg-white/90 text-slate-800 dark:bg-white/10 dark:text-white rounded-xl px-3 py-1 text-sm font-medium", "data-testid": "score", "data-value": String(points) }, t.scoreLabel, React.createElement("b", null, points)),
+            React.createElement("div", { className: "bg-white/90 text-slate-800 dark:bg-white/10 dark:text-white rounded-xl px-3 py-1 text-sm font-medium", "data-testid": "attempts", "data-value": String(attempts) }, t.attemptsLabel, React.createElement("b", null, attempts)),
+            React.createElement("div", { className: "bg-white/90 text-slate-800 dark:bg-white/10 dark:text-white rounded-xl px-3 py-1 text-sm font-medium", "data-testid": "accuracy", "data-value": String(accuracy) }, t.accuracyLabel, React.createElement("b", null, accuracy), "%"),
+            React.createElement("div", { className: "bg-white/90 text-slate-800 dark:bg-white/10 dark:text-white rounded-xl px-3 py-1 text-sm font-medium", "data-testid": "streak", "data-value": String(streak), role: "status", "aria-live": "polite" }, t.streakLabel, React.createElement("b", null, streak))
           )
         ),
         // Celebration toast (non-blocking)
@@ -575,9 +591,9 @@ function App() {
         ),
         React.createElement("main", { className: "flex flex-col gap-4" },
           React.createElement("div", {
-            className: `select-none cursor-pointer rounded-3xl p-8 shadow-lg transition border ${
+            className: `select-none cursor-pointer rounded-3xl p-8 shadow-xl transition hover:shadow-2xl active:scale-[0.99] border backdrop-blur-xl ${
               checked ? (isCorrect ? "bg-green-50 border-green-300" : "bg-rose-50 border-rose-300")
-                      : "bg-surface border-slate-200 hover:shadow-xl"
+                      : "bg-white/70 border-white/40"
             }`,
             onClick: onCardClick, role: "button", tabIndex: 0, onKeyDown: (e) => e.key === "Enter" && onCardClick(),
             "data-testid": "card",
@@ -607,12 +623,12 @@ function App() {
               "data-testid": "answer-input"
             }),
             React.createElement("div", { className: "mt-3 flex flex-wrap gap-2" },
-              React.createElement("button", { onClick: checkAnswer, className: "body px-4 py-2 rounded-xl bg-primary text-white hover:opacity-90 active:translate-y-px", "data-testid": "btn-check" }, t.btnCheck),
-              React.createElement("button", { onClick: nextCard, className: "body px-4 py-2 rounded-xl bg-secondary text-white hover:opacity-90 active:translate-y-px", "data-testid": "btn-next" }, t.btnNext),
-              React.createElement("button", { onClick: skipCard, className: "body px-4 py-2 rounded-xl bg-amber-500 text-white hover:bg-amber-600 active:translate-y-px", "data-testid": "btn-skip" }, t.btnSkip),
-              React.createElement("button", { onClick: reveal, className: "body px-4 py-2 rounded-xl bg-error text-white hover:opacity-90 active:translate-y-px", "data-testid": "btn-reveal" }, t.btnReveal),
-              React.createElement("button", { onClick: reshuffle, className: "body px-4 py-2 rounded-xl bg-success text-white hover:opacity-90 active:translate-y-px", "data-testid": "btn-reshuffle" }, t.btnReshuffle),
-              React.createElement("button", { onClick: resetStats, className: "body px-4 py-2 rounded-xl bg-slate-200 text-slate-800 hover:bg-slate-300 active:translate-y-px", "data-testid": "btn-reset" }, t.btnReset)
+              React.createElement("button", { onClick: checkAnswer, className: "body inline-flex items-center justify-center h-10 px-4 rounded-xl bg-primary text-white hover:opacity-90 active:translate-y-px", "data-testid": "btn-check" }, t.btnCheck),
+              React.createElement("button", { onClick: nextCard, className: "body inline-flex items-center justify-center h-10 px-4 rounded-xl bg-secondary text-white hover:opacity-90 active:translate-y-px", "data-testid": "btn-next" }, t.btnNext),
+              React.createElement("button", { onClick: skipCard, className: "body inline-flex items-center justify-center h-10 px-4 rounded-xl bg-amber-500 text-white hover:bg-amber-600 active:translate-y-px", "data-testid": "btn-skip" }, t.btnSkip),
+              React.createElement("button", { onClick: reveal, className: "body inline-flex items-center justify-center h-10 px-4 rounded-xl bg-error text-white hover:opacity-90 active:translate-y-px", "data-testid": "btn-reveal" }, t.btnReveal),
+              React.createElement("button", { onClick: reshuffle, className: "body inline-flex items-center justify-center h-10 px-4 rounded-xl bg-success text-white hover:opacity-90 active:translate-y-px", "data-testid": "btn-reshuffle" }, t.btnReshuffle),
+              React.createElement("button", { onClick: resetStats, className: "body inline-flex items-center justify-center h-10 px-4 rounded-xl bg-slate-200 text-slate-800 hover:bg-slate-300 active:translate-y-px", "data-testid": "btn-reset" }, t.btnReset)
             ),
             (checked && !isCorrect && diffResult) ? React.createElement("div", { className: "mt-4", "data-testid": "diff-feedback", role: "status", "aria-live": "polite", "data-errors": String(diffResult.summary.totalErrors) },
               React.createElement("div", { className: "text-slate-700 text-sm mb-2" }, DIFF_I18N.lettersWrong(diffResult.summary.totalErrors)),
