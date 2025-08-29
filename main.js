@@ -291,6 +291,60 @@ function App() {
   const [attempts, setAttempts] = React.useState(0);
   const [strictAccents, setStrictAccents] = React.useState(false);
 
+  // Daily streak (persisted in localStorage): increments once per day if a session occurred
+  const todayStr = () => {
+    try {
+      const d = new Date();
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
+    } catch (e) { return ''; }
+  };
+  const isYesterday = (last, today) => {
+    try {
+      const ld = new Date(last + 'T00:00:00');
+      const td = new Date(today + 'T00:00:00');
+      const diff = (td - ld) / (1000 * 60 * 60 * 24);
+      return diff === 1;
+    } catch (e) { return false; }
+  };
+  const loadDaily = () => {
+    try {
+      const ls = typeof window !== 'undefined' ? window.localStorage : null;
+      if (!ls) return { dailyStreak: 0, lastActiveDate: '' };
+      const s = parseInt(ls.getItem('dailyStreak') || '0', 10) || 0;
+      const d = ls.getItem('lastActiveDate') || '';
+      return { dailyStreak: Math.max(0, s), lastActiveDate: d };
+    } catch (e) { return { dailyStreak: 0, lastActiveDate: '' }; }
+  };
+  const [{ dailyStreak, lastActiveDate }, setDaily] = React.useState(loadDaily);
+  const persistDaily = React.useCallback((obj) => {
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        window.localStorage.setItem('dailyStreak', String(obj.dailyStreak|0));
+        window.localStorage.setItem('lastActiveDate', obj.lastActiveDate || '');
+      }
+    } catch (e) {}
+  }, []);
+  React.useEffect(() => { persistDaily({ dailyStreak, lastActiveDate }); }, [dailyStreak, lastActiveDate, persistDaily]);
+  const sessionMarkedRef = React.useRef(false);
+  const markDailySessionIfNeeded = React.useCallback(() => {
+    try {
+      const today = todayStr();
+      // If we've already recorded activity today in this session, skip
+      if (sessionMarkedRef.current && lastActiveDate === today) return;
+      // If localStorage already says today, just set the session flag
+      if (lastActiveDate === today) { sessionMarkedRef.current = true; return; }
+      let nextStreak = 1;
+      if (lastActiveDate && isYesterday(lastActiveDate, today)) {
+        nextStreak = (dailyStreak || 0) + 1;
+      }
+      setDaily({ dailyStreak: nextStreak, lastActiveDate: today });
+      sessionMarkedRef.current = true;
+    } catch (e) {}
+  }, [dailyStreak, lastActiveDate]);
+
   // Diff state for wrong answers (structured, rendered near input)
   const [diffResult, setDiffResult] = React.useState(null);
   // Transient visual feedback state for card (correct/wrong flash)
@@ -424,6 +478,8 @@ function App() {
 
   function checkAnswer() {
     if (checked) return;
+    // Mark a learning session for daily streaks upon the first actionable attempt
+    markDailySessionIfNeeded();
     const user = strictAccents ? normalize(input) : normalize(stripDiacritics(input));
     const ok = acceptedAnswers.some((ans) => {
       const normTarget = strictAccents ? normalize(ans) : normalize(stripDiacritics(ans));
@@ -466,9 +522,9 @@ function App() {
     setInput(""); setChecked(false); setIsCorrect(false); setDiffResult(null); inputRef.current?.focus();
   }
 
-  const skipCard = () => { setAttempts((a) => a + 1); setDiffResult(null); nextCard(); };
-  const reveal = () => { setInput(acceptedAnswers[0] || ""); setChecked(true); setIsCorrect(false); setAttempts((a) => a + 1); setStreak(0); lastCelebratedRef.current = 0; setDiffResult(null); };
-  const reshuffle = () => { setOrder(shuffle(poolIndices)); setIdx(0); setInput(""); setChecked(false); setIsCorrect(false); setPoints(0); setAttempts(0); setDiffResult(null); };
+  const skipCard = () => { markDailySessionIfNeeded(); setAttempts((a) => a + 1); setDiffResult(null); nextCard(); };
+  const reveal = () => { markDailySessionIfNeeded(); setInput(acceptedAnswers[0] || ""); setChecked(true); setIsCorrect(false); setAttempts((a) => a + 1); setStreak(0); lastCelebratedRef.current = 0; setDiffResult(null); };
+  const reshuffle = () => { markDailySessionIfNeeded(); setOrder(shuffle(poolIndices)); setIdx(0); setInput(""); setChecked(false); setIsCorrect(false); setPoints(0); setAttempts(0); setDiffResult(null); };
   const resetStats = () => { setIdx(0); setInput(""); setChecked(false); setIsCorrect(false); setPoints(0); setAttempts(0); setDiffResult(null); inputRef.current?.focus(); };
 
   function onCardClick() {
@@ -483,10 +539,24 @@ function App() {
   }
 
   const accuracy = attempts ? Math.round((points / attempts) * 100) : 0;
+  const progressPercent = (() => {
+    try {
+      const total = Math.max(1, order.length || 0);
+      const done = Math.max(0, Math.min(total, idx + 1));
+      return Math.round((done / total) * 100);
+    } catch (e) { return 0; }
+  })();
+  const milestoneHit = [3, 7, 14].includes(dailyStreak);
 
   return (
     React.createElement("div", { className: "min-h-screen bg-bg text-slate-900 flex flex-col items-center py-8 px-4" },
       React.createElement("div", { className: "w-full max-w-3xl mx-auto" },
+        // Progress bar on top
+        React.createElement("div", { className: "mb-4" },
+          React.createElement("div", { className: "h-2 rounded-full bg-slate-200 overflow-hidden" },
+            React.createElement("div", { className: "h-full bg-primary", style: { width: progressPercent + "%" }, "data-testid": "progress", role: "progressbar", "aria-valuemin": 0, "aria-valuemax": order.length, "aria-valuenow": Math.min(order.length, idx + 1), "data-index": String(idx + 1), "data-total": String(order.length) })
+          )
+        ),
         React.createElement("header", { className: "mb-6 overflow-hidden bg-gradient-to-br from-primary to-indigo-600 text-white rounded-3xl ring-1 ring-white/20 pt-10 md:pt-14 pb-8 md:pb-10 px-4 flex flex-col gap-4", "data-testid": "header" },
           React.createElement("div", { className: "max-w-xl space-y-4 text-white drop-shadow-sm" },
             React.createElement("h1", { className: "h1 tracking-tight drop-shadow-sm", role: "heading", "aria-level": 1 }, t.title),
@@ -585,11 +655,21 @@ function App() {
               )
             ))
           ),
-          React.createElement("div", { className: "flex flex-wrap gap-2" },
-            React.createElement("div", { className: "bg-white/90 text-slate-800 dark:bg-white/10 dark:text-white rounded-xl px-3 py-1 text-sm font-medium", "data-testid": "score", "data-value": String(points) }, t.scoreLabel, React.createElement("b", null, points)),
-            React.createElement("div", { className: "bg-white/90 text-slate-800 dark:bg-white/10 dark:text-white rounded-xl px-3 py-1 text-sm font-medium", "data-testid": "attempts", "data-value": String(attempts) }, t.attemptsLabel, React.createElement("b", null, attempts)),
-            React.createElement("div", { className: "bg-white/90 text-slate-800 dark:bg-white/10 dark:text-white rounded-xl px-3 py-1 text-sm font-medium", "data-testid": "accuracy", "data-value": String(accuracy) }, t.accuracyLabel, React.createElement("b", null, accuracy), "%"),
-            React.createElement("div", { className: "bg-white/90 text-slate-800 dark:bg-white/10 dark:text-white rounded-xl px-3 py-1 text-sm font-medium", "data-testid": "streak", "data-value": String(streak), role: "status", "aria-live": "polite" }, t.streakLabel, React.createElement("b", null, streak))
+          React.createElement("div", { className: "bg-white rounded-xl shadow px-2 py-2 flex flex-wrap gap-2" },
+            React.createElement("div", { className: "bg-white text-slate-800 rounded-xl px-3 py-1 text-sm font-medium", "data-testid": "score", "data-value": String(points) }, t.scoreLabel, React.createElement("b", null, points)),
+            React.createElement("div", { className: "bg-white text-slate-800 rounded-xl px-3 py-1 text-sm font-medium", "data-testid": "attempts", "data-value": String(attempts) }, t.attemptsLabel, React.createElement("b", null, attempts)),
+            React.createElement("div", { className: "bg-white text-slate-800 rounded-xl px-3 py-1 text-sm font-medium", "data-testid": "accuracy", "data-value": String(accuracy) }, t.accuracyLabel, React.createElement("b", null, accuracy), "%"),
+            // Combo streak (per-answer), kept for tests and celebration logic
+            React.createElement("div", { className: "bg-white text-slate-800 rounded-xl px-3 py-1 text-sm font-medium", "data-testid": "streak", "data-value": String(streak), role: "status", "aria-live": "polite" },
+              t.streakLabel, React.createElement("b", null, streak)
+            ),
+            // Daily streak with flame icon
+            React.createElement("div", { className: "bg-white text-slate-800 rounded-xl px-3 py-1 text-sm font-medium flex items-center gap-1", "data-testid": "daily-streak", "data-value": String(dailyStreak), role: "status", "aria-live": "polite" },
+              React.createElement("span", { "aria-hidden": "true" }, "🔥"),
+              t.streakLabel,
+              React.createElement("b", null, dailyStreak),
+              milestoneHit && React.createElement("span", { className: "ml-2 bg-white rounded-lg px-2 py-0.5 text-xs font-semibold border border-slate-200", "data-testid": "milestone" }, "Milestone!")
+            )
           )
         ),
         // Celebration toast (non-blocking)
