@@ -7,6 +7,11 @@
     <link rel="icon" href="./assets/icons/favicon.ico" type="image/x-icon" />
     <!-- Google Font: Inter -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
+    <script>
+      // Tailwind Play CDN config
+      window.tailwind = window.tailwind || {};
+      window.tailwind.config = { darkMode: 'class' };
+    </script>
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Centralized color system: CSS variables and helper utilities -->
     <style>
@@ -56,12 +61,24 @@
       window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
     </script>
     <script defer src="/_vercel/analytics/script.js"></script>
+    <script>
+      // Apply initial theme before paint to prevent FOUC
+      (function () {
+        try {
+          var saved = localStorage.getItem('theme');
+          var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+          var isDark = saved ? (saved === 'dark') : prefersDark;
+          if (isDark) document.documentElement.classList.add('dark');
+          else document.documentElement.classList.remove('dark');
+        } catch (e) {}
+      })();
+    </script>
   </head>
-  <body class="bg-bg">
-    <nav class="bg-white border-b border-slate-200">
+  <body class="bg-bg dark:bg-slate-900 dark:text-slate-100">
+    <nav class="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
       <div class="max-w-5xl mx-auto px-4 py-2 flex items-center gap-4 text-sm">
-        <a href="./index.html" class="text-slate-700 hover:text-slate-900 font-medium">Word Learning</a>
-        <a href="./grammar.html" class="text-sky-700 hover:text-sky-900 font-medium">Comparatives & Superlatives</a>
+        <a href="./index.html" class="text-slate-700 dark:text-slate-100 hover:text-slate-900 dark:hover:text-white font-medium">Word Learning</a>
+        <a href="./grammar.html" class="text-sky-700 dark:text-sky-400 hover:text-sky-900 dark:hover:text-sky-300 font-medium">Comparatives & Superlatives</a>
       </div>
     </nav>
     <div id="root"></div>

@@ -269,6 +269,25 @@ function App() {
   React.useEffect(() => { if (typeof document !== "undefined") { document.title = t.title; document.documentElement.lang = lang; } }, [lang, t.title]);
   const [themeKey, setThemeKey] = React.useState("all");
   const [posFilter, setPosFilter] = React.useState("all"); // all | nouns | verbs | adjectives
+
+  // Theme (light/dark) detection and toggle
+  const detectInitialTheme = () => {
+    try {
+      const saved = typeof window !== 'undefined' && window.localStorage ? window.localStorage.getItem('theme') : null;
+      if (saved === 'dark' || saved === 'light') return saved;
+      const prefersDark = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+      return prefersDark ? 'dark' : 'light';
+    } catch (e) { return 'light'; }
+  };
+  const [uiTheme, setUiTheme] = React.useState(detectInitialTheme);
+  React.useEffect(() => {
+    try {
+      const root = typeof document !== 'undefined' ? document.documentElement : null;
+      if (!root) return;
+      if (uiTheme === 'dark') root.classList.add('dark'); else root.classList.remove('dark');
+      if (typeof window !== 'undefined' && window.localStorage) window.localStorage.setItem('theme', uiTheme);
+    } catch (e) {}
+  }, [uiTheme]);
   React.useEffect(() => { setThemeKey("all"); }, [lang]);
   const poolIndices = React.useMemo(() => {
     const th = THEMES_LOCAL.find((x) => x.key === themeKey) || THEMES_LOCAL[0];
@@ -533,9 +552,9 @@ function App() {
   }
 
   function handleKeyDown(e) {
-    if (e.key === "Enter") { !checked ? checkAnswer() : nextCard(); }
-    if (e.key === "Escape") setInput("");
-    if (e.key === "ArrowRight") nextCard();
+    if (e.key === "Enter") { e.preventDefault(); e.stopPropagation(); !checked ? checkAnswer() : nextCard(); }
+    if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); setInput(""); }
+    if (e.key === "ArrowRight") { e.preventDefault(); e.stopPropagation(); nextCard(); }
   }
 
   const accuracy = attempts ? Math.round((points / attempts) * 100) : 0;
@@ -549,11 +568,11 @@ function App() {
   const milestoneHit = [3, 7, 14].includes(dailyStreak);
 
   return (
-    React.createElement("div", { className: "min-h-screen bg-bg text-slate-900 flex flex-col items-center py-8 px-4" },
+    React.createElement("div", { className: "min-h-screen bg-bg dark:bg-slate-900 text-slate-900 dark:text-slate-100 flex flex-col items-center py-8 px-4" },
       React.createElement("div", { className: "w-full max-w-3xl mx-auto" },
         // Progress bar on top
         React.createElement("div", { className: "mb-4" },
-          React.createElement("div", { className: "h-2 rounded-full bg-slate-200 overflow-hidden" },
+          React.createElement("div", { className: "h-2 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden" },
             React.createElement("div", { className: "h-full bg-primary", style: { width: progressPercent + "%" }, "data-testid": "progress", role: "progressbar", "aria-valuemin": 0, "aria-valuemax": order.length, "aria-valuenow": Math.min(order.length, idx + 1), "data-index": String(idx + 1), "data-total": String(order.length) })
           )
         ),
@@ -580,7 +599,7 @@ function App() {
                       key: opt.code,
                       type: "button",
                       onClick: () => setLang(opt.code),
-                      className: `px-1.5 py-1 rounded-full border ${lang === opt.code ? "border-sky-500 bg-sky-50" : "border-slate-300 bg-white hover:bg-slate-50"}`,
+                      className: `px-1.5 py-1 rounded-full border ${lang === opt.code ? "border-sky-500 bg-sky-50 dark:bg-sky-500/20" : "border-slate-300 bg-white hover:bg-slate-50 dark:border-white/20 dark:bg-white/10 dark:hover:bg-white/20"} focus:outline-none focus:ring-2 focus:ring-sky-500`, 
                       title: `${FLAG_ICONS[opt.code].label} → IT`,
                       "aria-label": `${FLAG_ICONS[opt.code].label} → IT`,
                       "aria-pressed": lang === opt.code,
@@ -601,7 +620,8 @@ function App() {
                 {
                   value: lang,
                   onChange: (e) => setLang(e.target.value),
-                  className: "body rounded-lg border border-slate-300 px-2 py-1 bg-white text-slate-900",
+                  className: "body rounded-lg border border-slate-300 px-2 py-1 bg-white text-slate-900 dark:border-white/20 dark:bg-white/10 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-sky-500",
+                  "aria-label": t.langLabel,
                   "data-testid": "lang-select"
                 },
                 [
@@ -617,26 +637,43 @@ function App() {
                 {
                   value: themeKey,
                   onChange: (e) => setThemeKey(e.target.value),
-                  className: "body rounded-lg border border-slate-300 px-2 py-1 bg-white text-slate-900",
+                  className: "body rounded-lg border border-slate-300 px-2 py-1 bg-white text-slate-900 dark:border-white/20 dark:bg-white/10 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-sky-500",
+                  "aria-label": t.themeLabel,
                   "data-testid": "theme-select"
                 },
                 THEMES_LOCAL.map((th) => React.createElement("option", { key: th.key, value: th.key }, th.name))
               ),
               React.createElement("label", { className: "text-xs text-white/80" }, t.posLabel),
               React.createElement(
-                "select",
-                {
-                  value: posFilter,
-                  onChange: (e) => setPosFilter(e.target.value),
-                  className: "body rounded-lg border border-slate-300 px-2 py-1 bg-white text-slate-900",
-                  "data-testid": "pos-select"
-                },
+              "select",
+              {
+                value: posFilter,
+                onChange: (e) => setPosFilter(e.target.value),
+                className: "body rounded-lg border border-slate-300 px-2 py-1 bg-white text-slate-900 dark:border-white/20 dark:bg-white/10 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-sky-500",
+                "aria-label": t.posLabel,
+                "data-testid": "pos-select"
+              },
                 [
                   React.createElement("option", { key: "all", value: "all" }, t.posAll),
                   React.createElement("option", { key: "nouns", value: "nouns" }, t.posNouns),
                   React.createElement("option", { key: "verbs", value: "verbs" }, t.posVerbs),
                   React.createElement("option", { key: "adjectives", value: "adjectives" }, t.posAdjectives)
                 ]
+              ),
+              React.createElement(
+                "button",
+                {
+                  type: "button",
+                  onClick: () => setUiTheme(uiTheme === 'dark' ? 'light' : 'dark'),
+                  className: "ml-auto inline-flex items-center gap-2 px-3 h-9 rounded-full bg-white/80 text-slate-800 border border-white/40 hover:shadow transition dark:bg-white/10 dark:text-slate-100 dark:border-white/10 focus:outline-none focus:ring-2 focus:ring-sky-500",
+                  title: uiTheme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode',
+                  "aria-label": uiTheme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode',
+                  "aria-pressed": uiTheme === 'dark',
+                  "data-testid": "theme-toggle"
+                },
+                uiTheme === 'dark'
+                  ? [React.createElement('span', { key: 'icon', "aria-hidden": "true" }, '🌙'), React.createElement('span', { key: 'label', className: "text-sm" }, 'Dark')]
+                  : [React.createElement('span', { key: 'icon', "aria-hidden": "true" }, '☀️'), React.createElement('span', { key: 'label', className: "text-sm" }, 'Light')]
               )
             )
           ),
@@ -646,29 +683,30 @@ function App() {
                 key: th.key,
                 type: "button",
                 onClick: () => setThemeKey(th.key),
-                className: `w-28 h-28 md:w-32 md:h-32 rounded-2xl bg-white/80 dark:bg-white/10 shadow hover:shadow-lg transition p-3 text-center shrink-0 ${themeKey === th.key ? 'ring-2 ring-white/60' : ''}`,
+                className: `w-28 h-28 md:w-32 md:h-32 rounded-2xl bg-white/80 dark:bg-white/10 shadow hover:shadow-lg transition p-3 text-center shrink-0 ${themeKey === th.key ? 'ring-2 ring-white/60' : ''} focus:outline-none focus:ring-2 focus:ring-sky-500`,
+                "aria-label": `Select theme: ${th.name}`,
                 "aria-pressed": themeKey === th.key ? 'true' : 'false',
                 "data-testid": `theme-card-${th.key}`
               },
-                React.createElement("div", { className: "font-medium text-slate-900" }, th.name),
-                React.createElement("div", { className: "text-xs text-slate-500 mt-1" }, th.key === 'all' ? `${WORDS_LOCAL.length} words` : `${th.count} words`)
+                React.createElement("div", { className: "font-medium text-slate-900 dark:text-slate-100" }, th.name),
+                React.createElement("div", { className: "text-xs text-slate-600 dark:text-slate-400 mt-1" }, th.key === 'all' ? `${WORDS_LOCAL.length} words` : `${th.count} words`)
               )
             ))
           ),
-          React.createElement("div", { className: "bg-white rounded-xl shadow px-2 py-2 flex flex-wrap gap-2" },
-            React.createElement("div", { className: "bg-white text-slate-800 rounded-xl px-3 py-1 text-sm font-medium", "data-testid": "score", "data-value": String(points) }, t.scoreLabel, React.createElement("b", null, points)),
-            React.createElement("div", { className: "bg-white text-slate-800 rounded-xl px-3 py-1 text-sm font-medium", "data-testid": "attempts", "data-value": String(attempts) }, t.attemptsLabel, React.createElement("b", null, attempts)),
-            React.createElement("div", { className: "bg-white text-slate-800 rounded-xl px-3 py-1 text-sm font-medium", "data-testid": "accuracy", "data-value": String(accuracy) }, t.accuracyLabel, React.createElement("b", null, accuracy), "%"),
+          React.createElement("div", { className: "bg-white/80 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl shadow px-2 py-2 flex flex-wrap gap-2" },
+            React.createElement("div", { className: "bg-white/90 text-slate-800 dark:bg-white/10 dark:text-white rounded-xl px-3 py-1 text-sm font-medium", "data-testid": "score", "data-value": String(points) }, t.scoreLabel, React.createElement("b", null, points)),
+            React.createElement("div", { className: "bg-white/90 text-slate-800 dark:bg-white/10 dark:text-white rounded-xl px-3 py-1 text-sm font-medium", "data-testid": "attempts", "data-value": String(attempts) }, t.attemptsLabel, React.createElement("b", null, attempts)),
+            React.createElement("div", { className: "bg-white/90 text-slate-800 dark:bg-white/10 dark:text-white rounded-xl px-3 py-1 text-sm font-medium", "data-testid": "accuracy", "data-value": String(accuracy) }, t.accuracyLabel, React.createElement("b", null, accuracy), "%"),
             // Combo streak (per-answer), kept for tests and celebration logic
-            React.createElement("div", { className: "bg-white text-slate-800 rounded-xl px-3 py-1 text-sm font-medium", "data-testid": "streak", "data-value": String(streak), role: "status", "aria-live": "polite" },
+            React.createElement("div", { className: "bg-white/90 text-slate-800 dark:bg-white/10 dark:text-white rounded-xl px-3 py-1 text-sm font-medium", "data-testid": "streak", "data-value": String(streak), role: "status", "aria-live": "polite" },
               t.streakLabel, React.createElement("b", null, streak)
             ),
             // Daily streak with flame icon
-            React.createElement("div", { className: "bg-white text-slate-800 rounded-xl px-3 py-1 text-sm font-medium flex items-center gap-1", "data-testid": "daily-streak", "data-value": String(dailyStreak), role: "status", "aria-live": "polite" },
+            React.createElement("div", { className: "bg-white/90 text-slate-800 dark:bg-white/10 dark:text-white rounded-xl px-3 py-1 text-sm font-medium flex items-center gap-1", "data-testid": "daily-streak", "data-value": String(dailyStreak), role: "status", "aria-live": "polite" },
               React.createElement("span", { "aria-hidden": "true" }, "🔥"),
               t.streakLabel,
               React.createElement("b", null, dailyStreak),
-              milestoneHit && React.createElement("span", { className: "ml-2 bg-white rounded-lg px-2 py-0.5 text-xs font-semibold border border-slate-200", "data-testid": "milestone" }, "Milestone!")
+              milestoneHit && React.createElement("span", { className: "ml-2 bg-white/90 dark:bg-white/10 text-slate-800 dark:text-white rounded-lg px-2 py-0.5 text-xs font-semibold border border-slate-200 dark:border-white/10", "data-testid": "milestone" }, "Milestone!")
             )
           )
         ),
@@ -676,7 +714,7 @@ function App() {
         React.createElement("div", { className: "fixed top-4 left-0 right-0 flex justify-center pointer-events-none z-50" },
           showCelebrate && React.createElement(
             "div",
-            { className: "pointer-events-none bg-white border border-sky-300 rounded-2xl shadow-lg px-4 py-3 text-sky-900 flex items-center gap-2",
+            { className: "pointer-events-none bg-white dark:bg-slate-800/90 border border-sky-300 dark:border-sky-700 rounded-2xl shadow-lg px-4 py-3 text-sky-900 dark:text-sky-200 flex items-center gap-2",
               role: "status", "aria-live": "polite", "aria-atomic": "true", "data-testid": "celebration" },
             React.createElement("span", { className: "text-2xl animate-bounce", "aria-hidden": "true" }, "🎉"),
             React.createElement("span", null, celebrateMsg),
@@ -686,53 +724,56 @@ function App() {
         React.createElement("main", { className: "flex flex-col gap-4" },
           React.createElement("div", {
             key: `card-${order[idx]}`,
-            className: `select-none cursor-pointer rounded-3xl p-8 shadow-xl transition hover:shadow-2xl active:scale-[0.99] border backdrop-blur-xl animate-fadeInShort bg-white/70 border-white/40 ${
+            className: `select-none cursor-pointer rounded-3xl p-8 shadow-xl transition hover:shadow-2xl active:scale-[0.99] border backdrop-blur-xl animate-fadeInShort bg-white/70 border-white/40 dark:bg-white/10 dark:border-white/10 ${
               flash === 'correct' ? "ring-2 ring-green-400 bg-green-50" : (flash === 'wrong' ? "ring-2 ring-rose-400 bg-rose-50" : "")
-            }`,
+            } focus:outline-none focus:ring-2 focus:ring-sky-500`,
             onClick: onCardClick, role: "button", tabIndex: 0, onKeyDown: (e) => e.key === "Enter" && onCardClick(),
+            "aria-label": checked ? t.clickHintChecked : t.clickHintUnchecked,
             "data-testid": "card",
             "data-checked": checked ? "true" : "false",
             "data-correct": checked ? (isCorrect ? "true" : "false") : "false"
           },
-            React.createElement("div", { className: "text-slate-500 text-xs uppercase tracking-widest mb-2" }, t.sourceLabel),
+            React.createElement("div", { className: "text-slate-500 dark:text-slate-400 text-xs uppercase tracking-widest mb-2" }, t.sourceLabel),
             React.createElement("div", { className: "text-4xl md:text-5xl font-semibold", "data-testid": "source-word" }, sourceWord),
-            React.createElement("div", { className: "mt-4 text-slate-500 text-sm" }, checked ? t.clickHintChecked : t.clickHintUnchecked),
+            React.createElement("div", { className: "mt-4 text-slate-500 dark:text-slate-400 text-sm" }, checked ? t.clickHintChecked : t.clickHintUnchecked),
             checked && React.createElement("div", { className: "mt-4", "data-testid": "feedback", "data-correct": isCorrect ? "true" : "false" },
               isCorrect
-                ? React.createElement("div", { className: "text-green-700 font-medium" }, t.correct)
-                : React.createElement("div", { className: "text-rose-700 font-medium" },
+                ? React.createElement("div", { className: "text-green-700 dark:text-green-400 font-medium" }, t.correct)
+                : React.createElement("div", { className: "text-rose-700 dark:text-rose-400 font-medium" },
                     t.correctAnswerLabel, React.createElement("span", { className: "underline", "data-testid": "correct-answer" }, acceptedAnswers[0]),
                     acceptedAnswers.length > 1 &&
-                      React.createElement("span", { className: "text-slate-500" }, `${t.alsoAcceptedPrefix}${acceptedAnswers.slice(1).join(", ")}${t.alsoAcceptedSuffix}`)
+                      React.createElement("span", { className: "text-slate-500 dark:text-slate-400" }, `${t.alsoAcceptedPrefix}${acceptedAnswers.slice(1).join(", ")}${t.alsoAcceptedSuffix}`)
                   )
             )
           ),
-          React.createElement("div", { className: "bg-surface rounded-3xl p-5 shadow border border-slate-200" },
-            React.createElement("label", { className: "block text-sm text-slate-600 mb-2" }, t.inputLabel),
+          React.createElement("div", { className: "bg-surface dark:bg-slate-800/50 rounded-3xl p-5 shadow border border-slate-200 dark:border-slate-700" },
+            React.createElement("label", { className: "block text-sm text-slate-600 dark:text-slate-300 mb-2" }, t.inputLabel),
             React.createElement("input", {
               ref: inputRef, value: input, onChange: (e) => setInput(e.target.value), onKeyDown: handleKeyDown,
               placeholder: t.placeholder,
-              className: "body w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:ring-2 focus:ring-sky-400 focus:border-sky-400",
+              className: "body w-full rounded-xl border border-slate-300 dark:border-slate-600 px-4 py-3 outline-none bg-white dark:bg-slate-900/50 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-sky-500 focus:border-sky-500",
               autoComplete: "off",
+              "aria-label": t.inputLabel,
               "data-testid": "answer-input"
             }),
             React.createElement("div", { className: "mt-3 flex flex-wrap gap-2" },
-              React.createElement("button", { onClick: checkAnswer, className: "body inline-flex items-center justify-center h-10 px-4 rounded-xl bg-primary text-white hover:opacity-90 transition-transform hover:scale-105 active:scale-95", "data-testid": "btn-check" }, t.btnCheck),
-              React.createElement("button", { onClick: nextCard, className: "body inline-flex items-center justify-center h-10 px-4 rounded-xl bg-secondary text-white hover:opacity-90 transition-transform hover:scale-105 active:scale-95", "data-testid": "btn-next" }, t.btnNext),
-              React.createElement("button", { onClick: skipCard, className: "body inline-flex items-center justify-center h-10 px-4 rounded-xl bg-amber-500 text-white hover:bg-amber-600 transition-transform hover:scale-105 active:scale-95", "data-testid": "btn-skip" }, t.btnSkip),
-              React.createElement("button", { onClick: reveal, className: "body inline-flex items-center justify-center h-10 px-4 rounded-xl bg-error text-white hover:opacity-90 transition-transform hover:scale-105 active:scale-95", "data-testid": "btn-reveal" }, t.btnReveal),
-              React.createElement("button", { onClick: reshuffle, className: "body inline-flex items-center justify-center h-10 px-4 rounded-xl bg-success text-white hover:opacity-90 transition-transform hover:scale-105 active:scale-95", "data-testid": "btn-reshuffle" }, t.btnReshuffle),
-              React.createElement("button", { onClick: resetStats, className: "body inline-flex items-center justify-center h-10 px-4 rounded-xl bg-slate-200 text-slate-800 hover:bg-slate-300 transition-transform hover:scale-105 active:scale-95", "data-testid": "btn-reset" }, t.btnReset)
+              React.createElement("button", { onClick: checkAnswer, className: "body inline-flex items-center justify-center h-10 px-4 rounded-xl bg-primary text-white hover:opacity-90 transition-transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-sky-500", "aria-label": t.btnCheck, "data-testid": "btn-check" }, t.btnCheck),
+              React.createElement("button", { onClick: nextCard, className: "body inline-flex items-center justify-center h-10 px-4 rounded-xl bg-secondary text-white hover:opacity-90 transition-transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-sky-500", "aria-label": t.btnNext, "data-testid": "btn-next" }, t.btnNext),
+              React.createElement("button", { onClick: skipCard, className: "body inline-flex items-center justify-center h-10 px-4 rounded-xl bg-amber-500 text-white hover:bg-amber-600 transition-transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-sky-500", "aria-label": t.btnSkip, "data-testid": "btn-skip" }, t.btnSkip),
+              React.createElement("button", { onClick: reveal, className: "body inline-flex items-center justify-center h-10 px-4 rounded-xl bg-error text-white hover:opacity-90 transition-transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-sky-500", "aria-label": t.btnReveal, "data-testid": "btn-reveal" }, t.btnReveal),
+              React.createElement("button", { onClick: reshuffle, className: "body inline-flex items-center justify-center h-10 px-4 rounded-xl bg-success text-white hover:opacity-90 transition-transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-sky-500", "aria-label": t.btnReshuffle, "data-testid": "btn-reshuffle" }, t.btnReshuffle),
+              React.createElement("button", { onClick: resetStats, className: "body inline-flex items-center justify-center h-10 px-4 rounded-xl bg-slate-200 text-slate-800 hover:bg-slate-300 transition-transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-sky-500", "aria-label": t.btnReset, "data-testid": "btn-reset" }, t.btnReset)
             ),
+            React.createElement("div", { className: "mt-2 text-xs text-slate-600 dark:text-slate-300", "data-testid": "shortcuts-help", role: "note" }, "Shortcuts: Enter = Check, → = Next, Esc = Clear"),
             (checked && !isCorrect && diffResult) ? React.createElement("div", { className: "mt-4", "data-testid": "diff-feedback", role: "status", "aria-live": "polite", "data-errors": String(diffResult.summary.totalErrors) },
-              React.createElement("div", { className: "text-slate-700 text-sm mb-2" }, DIFF_I18N.lettersWrong(diffResult.summary.totalErrors)),
-              React.createElement("div", { className: "bg-white rounded-2xl border border-slate-200 shadow-sm p-3" },
-                React.createElement("div", { className: "text-xs text-slate-500 mb-1" }, DIFF_I18N.yourAnswer),
+              React.createElement("div", { className: "text-slate-700 dark:text-slate-300 text-sm mb-2" }, DIFF_I18N.lettersWrong(diffResult.summary.totalErrors)),
+              React.createElement("div", { className: "bg-white dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm p-3" },
+                React.createElement("div", { className: "text-xs text-slate-500 dark:text-slate-400 mb-1" }, DIFF_I18N.yourAnswer),
                 React.createElement("div", { className: "font-mono text-base flex flex-wrap gap-1" },
                   diffResult.ops.map((op) => {
                     const pos = (op.col || 0) + 1;
                     if (op.type === 'equal') {
-                      return React.createElement("span", { key: `u-${pos}`, className: "text-green-700 transition-colors", "data-op": op.type, "data-pos": String(pos), "aria-label": `Position ${pos}: correct '${op.a}'` }, op.a);
+                      return React.createElement("span", { key: `u-${pos}`, className: "text-green-700 dark:text-green-400 transition-colors", "data-op": op.type, "data-pos": String(pos), "aria-label": `Position ${pos}: correct '${op.a}'` }, op.a);
                     }
                     if (op.type === 'replace') {
                       return React.createElement("span", { key: `u-${pos}`, className: "text-rose-800 underline decoration-rose-500 decoration-2 rounded px-0.5 transition-colors", "data-op": op.type, "data-pos": String(pos), "aria-label": `Position ${pos}: expected '${op.b}', got '${op.a}'` }, op.a);
@@ -764,7 +805,7 @@ function App() {
               )
             ) : null,
             React.createElement("div", { className: "mt-4 flex items-center gap-2 text-sm" },
-              React.createElement("input", { id: "strict", type: "checkbox", checked: strictAccents, onChange: (e) => setStrictAccents(e.target.checked), className: "h-4 w-4", "data-testid": "strict-toggle" }),
+              React.createElement("input", { id: "strict", type: "checkbox", checked: strictAccents, onChange: (e) => setStrictAccents(e.target.checked), className: "h-4 w-4 rounded focus:outline-none focus:ring-2 focus:ring-sky-500", "data-testid": "strict-toggle" }),
               React.createElement("label", { htmlFor: "strict", className: "select-none cursor-pointer" }, t.strictLabel)
             )
           ),
