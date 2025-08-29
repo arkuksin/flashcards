@@ -46,6 +46,10 @@
       .h2 { font-size: 1.5rem; line-height: 2rem; font-weight: 600; }
       @media (min-width: 768px) { .h2 { font-size: 1.875rem; line-height: 2.25rem; } }
       .body { font-size: 1rem; line-height: 1.625; }
+
+      /* Micro-interactions: fade-in */
+      @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+      .animate-fadeInShort { animation: fadeIn 0.2s ease; }
     </style>
     <!-- Vercel Web Analytics (cookieless) for non-Next static sites -->
     <script>
@@ -73,6 +77,9 @@
     <script src="./data/dataset-fr.js"></script>
     <!-- Logic (pure diff) -->
     <script src="./logic/compareWords.js"></script>
+    <!-- Micro-interactions: Confetti via CDN and helper -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+    <script src="./utils/confetti.js"></script>
     <!-- App -->
     <script src="./main.js"></script>
   </body>

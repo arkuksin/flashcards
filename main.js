@@ -293,6 +293,9 @@ function App() {
 
   // Diff state for wrong answers (structured, rendered near input)
   const [diffResult, setDiffResult] = React.useState(null);
+  // Transient visual feedback state for card (correct/wrong flash)
+  const [flash, setFlash] = React.useState(null); // 'correct' | 'wrong' | null
+  const flashTimeoutRef = React.useRef(null);
 
   // Localized texts for diff highlight area (visible labels and count), based on current language
   const DIFF_I18N = React.useMemo(() => {
@@ -390,6 +393,7 @@ function App() {
   React.useEffect(() => {
     return () => {
       if (celebrateTimeoutRef.current) { clearTimeout(celebrateTimeoutRef.current); }
+      if (flashTimeoutRef.current) { clearTimeout(flashTimeoutRef.current); }
     };
   }, []);
 
@@ -428,6 +432,7 @@ function App() {
     setIsCorrect(ok);
     setChecked(true);
     setAttempts((a) => a + 1);
+    if (flashTimeoutRef.current) { clearTimeout(flashTimeoutRef.current); }
     if (ok) {
       setPoints((p) => p + 1);
       setDiffResult(null);
@@ -436,16 +441,25 @@ function App() {
         triggerCelebration(next);
         return next;
       });
+      // micro-interactions: confetti + green flash
+      try { if (typeof window !== "undefined" && typeof window.confettiBurst === "function") { window.confettiBurst(); } } catch(e) {}
+      setFlash('correct');
+      flashTimeoutRef.current = setTimeout(() => setFlash(null), 800);
     } else {
       // Compute best diff against first accepted answer(s)
       const best = computeBestDiff(input, acceptedAnswers, { caseInsensitive: true, ignoreDiacritics: !strictAccents });
       setDiffResult(best);
       setStreak(0);
       lastCelebratedRef.current = 0; // allow future celebrations at 10,20,... after a reset
+      // micro-interactions: red flash
+      setFlash('wrong');
+      flashTimeoutRef.current = setTimeout(() => setFlash(null), 800);
     }
   }
 
   function nextCard() {
+    if (flashTimeoutRef.current) { clearTimeout(flashTimeoutRef.current); }
+    setFlash(null);
     const next = idx + 1;
     if (next >= order.length) { setOrder(shuffle(poolIndices)); setIdx(0); }
     else { setIdx(next); }
@@ -591,9 +605,9 @@ function App() {
         ),
         React.createElement("main", { className: "flex flex-col gap-4" },
           React.createElement("div", {
-            className: `select-none cursor-pointer rounded-3xl p-8 shadow-xl transition hover:shadow-2xl active:scale-[0.99] border backdrop-blur-xl ${
-              checked ? (isCorrect ? "bg-green-50 border-green-300" : "bg-rose-50 border-rose-300")
-                      : "bg-white/70 border-white/40"
+            key: `card-${order[idx]}`,
+            className: `select-none cursor-pointer rounded-3xl p-8 shadow-xl transition hover:shadow-2xl active:scale-[0.99] border backdrop-blur-xl animate-fadeInShort bg-white/70 border-white/40 ${
+              flash === 'correct' ? "ring-2 ring-green-400 bg-green-50" : (flash === 'wrong' ? "ring-2 ring-rose-400 bg-rose-50" : "")
             }`,
             onClick: onCardClick, role: "button", tabIndex: 0, onKeyDown: (e) => e.key === "Enter" && onCardClick(),
             "data-testid": "card",
@@ -623,12 +637,12 @@ function App() {
               "data-testid": "answer-input"
             }),
             React.createElement("div", { className: "mt-3 flex flex-wrap gap-2" },
-              React.createElement("button", { onClick: checkAnswer, className: "body inline-flex items-center justify-center h-10 px-4 rounded-xl bg-primary text-white hover:opacity-90 active:translate-y-px", "data-testid": "btn-check" }, t.btnCheck),
-              React.createElement("button", { onClick: nextCard, className: "body inline-flex items-center justify-center h-10 px-4 rounded-xl bg-secondary text-white hover:opacity-90 active:translate-y-px", "data-testid": "btn-next" }, t.btnNext),
-              React.createElement("button", { onClick: skipCard, className: "body inline-flex items-center justify-center h-10 px-4 rounded-xl bg-amber-500 text-white hover:bg-amber-600 active:translate-y-px", "data-testid": "btn-skip" }, t.btnSkip),
-              React.createElement("button", { onClick: reveal, className: "body inline-flex items-center justify-center h-10 px-4 rounded-xl bg-error text-white hover:opacity-90 active:translate-y-px", "data-testid": "btn-reveal" }, t.btnReveal),
-              React.createElement("button", { onClick: reshuffle, className: "body inline-flex items-center justify-center h-10 px-4 rounded-xl bg-success text-white hover:opacity-90 active:translate-y-px", "data-testid": "btn-reshuffle" }, t.btnReshuffle),
-              React.createElement("button", { onClick: resetStats, className: "body inline-flex items-center justify-center h-10 px-4 rounded-xl bg-slate-200 text-slate-800 hover:bg-slate-300 active:translate-y-px", "data-testid": "btn-reset" }, t.btnReset)
+              React.createElement("button", { onClick: checkAnswer, className: "body inline-flex items-center justify-center h-10 px-4 rounded-xl bg-primary text-white hover:opacity-90 transition-transform hover:scale-105 active:scale-95", "data-testid": "btn-check" }, t.btnCheck),
+              React.createElement("button", { onClick: nextCard, className: "body inline-flex items-center justify-center h-10 px-4 rounded-xl bg-secondary text-white hover:opacity-90 transition-transform hover:scale-105 active:scale-95", "data-testid": "btn-next" }, t.btnNext),
+              React.createElement("button", { onClick: skipCard, className: "body inline-flex items-center justify-center h-10 px-4 rounded-xl bg-amber-500 text-white hover:bg-amber-600 transition-transform hover:scale-105 active:scale-95", "data-testid": "btn-skip" }, t.btnSkip),
+              React.createElement("button", { onClick: reveal, className: "body inline-flex items-center justify-center h-10 px-4 rounded-xl bg-error text-white hover:opacity-90 transition-transform hover:scale-105 active:scale-95", "data-testid": "btn-reveal" }, t.btnReveal),
+              React.createElement("button", { onClick: reshuffle, className: "body inline-flex items-center justify-center h-10 px-4 rounded-xl bg-success text-white hover:opacity-90 transition-transform hover:scale-105 active:scale-95", "data-testid": "btn-reshuffle" }, t.btnReshuffle),
+              React.createElement("button", { onClick: resetStats, className: "body inline-flex items-center justify-center h-10 px-4 rounded-xl bg-slate-200 text-slate-800 hover:bg-slate-300 transition-transform hover:scale-105 active:scale-95", "data-testid": "btn-reset" }, t.btnReset)
             ),
             (checked && !isCorrect && diffResult) ? React.createElement("div", { className: "mt-4", "data-testid": "diff-feedback", role: "status", "aria-live": "polite", "data-errors": String(diffResult.summary.totalErrors) },
               React.createElement("div", { className: "text-slate-700 text-sm mb-2" }, DIFF_I18N.lettersWrong(diffResult.summary.totalErrors)),
