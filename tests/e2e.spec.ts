@@ -1,4 +1,11 @@
 import { test, expect } from '@playwright/test';
+import { applyVercelBypass } from './utils';
+
+const BASE_URL = process.env.BASE_URL || 'http://127.0.0.1:4173';
+
+test.beforeEach(async ({ context }) => {
+    await applyVercelBypass(context, BASE_URL);
+});
 
 // Utilities to stabilize tests
 async function forceEnglishAndOpen(page) {

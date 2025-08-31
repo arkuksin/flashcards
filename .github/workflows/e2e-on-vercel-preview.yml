@@ -10,20 +10,20 @@ permissions:
 jobs:
   e2e:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # Wartet auf das von der Vercel GitHub App erzeugte Preview-Deployment
-      # und liefert die Preview-URL als Output (z. B. https://<hash>-<project>.vercel.app)
       - name: Wait for Vercel Preview
         id: vercel
         uses: patrickedqvist/wait-for-vercel-preview@v1.3.2
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          timeout: 600
+          max_timeout: 600
+          check_interval: 20
+          vercel_password: ${{ secrets.VERCEL_PROTECTION_BYPASS }}
 
       - name: Show preview URL
         run: echo "Preview URL = ${{ steps.vercel.outputs.url }}"
@@ -32,20 +32,18 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'npm'
+          cache: npm
 
       - name: Install dependencies
-        run: |
-          npm ci || npm i
+        run: npm ci || npm i
 
       - name: Install Playwright Browsers
         run: npx playwright install --with-deps
 
-      # Setzt BASE_URL auf die Vercel-Preview, damit der Analytics-Test
-      # und alle E2E-Tests gegen die echte Preview laufen.
       - name: Run Playwright tests (against Vercel preview)
         env:
           BASE_URL: ${{ steps.vercel.outputs.url }}
+          VERCEL_PROTECTION_BYPASS: ${{ secrets.VERCEL_PROTECTION_BYPASS }}
         run: npx playwright test
 
       - name: Upload Playwright report
