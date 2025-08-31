@@ -29,15 +29,23 @@ jobs:
         continue-on-error: true
 
       - name: Show preview URL
-        run: echo "Preview URL = ${{ steps.vercel.outputs.url }}"
+        run: |
+          echo "Vercel step outcome: ${{ steps.vercel.outcome }}"
+          echo "Preview URL = ${{ steps.vercel.outputs.url }}"
 
       - name: Check if Vercel preview is available
         id: check_vercel
         run: |
+          echo "Checking Vercel availability..."
+          echo "Vercel outcome: ${{ steps.vercel.outcome }}"
+          echo "Vercel URL: ${{ steps.vercel.outputs.url }}"
+          
           if [ "${{ steps.vercel.outcome }}" = "success" ] && [ -n "${{ steps.vercel.outputs.url }}" ]; then
+            echo "✅ Vercel preview is available"
             echo "vercel_available=true" >> $GITHUB_OUTPUT
             echo "base_url=${{ steps.vercel.outputs.url }}" >> $GITHUB_OUTPUT
           else
+            echo "❌ Vercel preview not available, will use local server"
             echo "vercel_available=false" >> $GITHUB_OUTPUT
             echo "base_url=http://127.0.0.1:4173" >> $GITHUB_OUTPUT
           fi
@@ -58,9 +66,12 @@ jobs:
       - name: Start local server (fallback if Vercel not available)
         if: steps.check_vercel.outputs.vercel_available == 'false'
         run: |
+          echo "🚀 Starting local HTTP server as fallback..."
           npx http-server -p 4173 -a 127.0.0.1 -c-1 . &
           sleep 10
+          echo "📡 Testing local server connectivity..."
           curl --retry 10 --retry-delay 1 --retry-connrefused http://127.0.0.1:4173
+          echo "✅ Local server is ready"
 
       # Setzt BASE_URL auf die Vercel-Preview, damit der Analytics-Test
       # und alle E2E-Tests gegen die echte Preview laufen.
@@ -69,7 +80,12 @@ jobs:
         env:
           BASE_URL: ${{ steps.check_vercel.outputs.base_url }}
         run: |
-          echo "Running tests against: $BASE_URL"
+          echo "🧪 Running tests against: $BASE_URL"
+          if [ "${{ steps.check_vercel.outputs.vercel_available }}" = "true" ]; then
+            echo "📍 Testing against Vercel preview deployment"
+          else
+            echo "📍 Testing against local server (fallback mode)"
+          fi
           npx playwright test
 
       - name: Upload Playwright report
