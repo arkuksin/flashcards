@@ -20,7 +20,7 @@ jobs:
       # und liefert die Preview-URL als Output (z. B. https://<hash>-<project>.vercel.app)
       - name: Wait for Vercel Preview
         id: vercel
-        uses: patrickedqvist/wait-for-vercel-preview@v1.3.0
+        uses: patrickedqvist/wait-for-vercel-preview@v1.3.2
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           timeout: 600
