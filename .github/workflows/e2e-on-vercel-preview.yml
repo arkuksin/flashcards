@@ -23,7 +23,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           max_timeout: 600
           check_interval: 20
-          vercel_password: ${{ secrets.VERCEL_PROTECTION_BYPASS }}
+          path: "/?vercel-protection-bypass=${{ secrets.VERCEL_PROTECTION_BYPASS }}"
 
       - name: Show preview URL
         run: echo "Preview URL = ${{ steps.vercel.outputs.url }}"
