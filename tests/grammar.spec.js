@@ -26,8 +26,8 @@ test.describe('Grammar — Comparatives & Superlatives', () => {
       const [pos, comp, sup] = window.GrammarComparatives.enForms(b);
       return p.includes('comparative') ? comp : sup;
     }, [base, prompt]);
-    await page.fill('[data-testid="answer-input"]', expected);
-    await page.click('[data-testid="btn-check"]');
+    await page.fill('[data-testid="answer"]', expected);
+    await page.click('[data-testid="check"]');
     await expect(page.locator('[data-testid="feedback"]').first()).toHaveAttribute('data-correct', 'true');
   });
 
@@ -76,7 +76,7 @@ test.describe('Grammar — Comparatives & Superlatives', () => {
       await page.locator(`[data-testid="dnd-value-${idx}"]`).click();
       await page.locator(`[data-testid="dnd-slot-${key}"]`).click();
     }
-    await page.click('[data-testid="btn-check"]');
+    await page.click('[data-testid="check"]');
     await expect(page.locator('[data-testid="feedback"]').first()).toHaveAttribute('data-correct', 'true');
   });
 });
@@ -104,8 +104,8 @@ test.describe('Grammar — Italian accent handling', () => {
       return expected.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
     }, [base, prompt]);
 
-    await page.fill('[data-testid="answer-input"]', answerNoAccents);
-    await page.click('[data-testid="btn-check"]');
+    await page.fill('[data-testid="answer"]', answerNoAccents);
+    await page.click('[data-testid="check"]');
     await expect(page.locator('[data-testid="feedback"]').first()).toHaveAttribute('data-correct', 'true');
   });
 
@@ -123,8 +123,8 @@ test.describe('Grammar — Italian accent handling', () => {
       return expected.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
     }, [base, prompt]);
 
-    await page.fill('[data-testid="answer-input"]', answerNoAccents);
-    await page.click('[data-testid="btn-check"]');
+    await page.fill('[data-testid="answer"]', answerNoAccents);
+    await page.click('[data-testid="check"]');
     await expect(page.locator('[data-testid="feedback"]').first()).toHaveAttribute('data-correct', 'false');
   });
 });
@@ -148,7 +148,7 @@ test2.describe('Grammar — Shortcuts', () => {
       return p.includes('comparative') ? comp : sup;
     }, [base, prompt]);
 
-    await page.fill('[data-testid="answer-input"]', expected);
+    await page.fill('[data-testid="answer"]', expected);
     await page.keyboard.press('Enter');
     await expect2(page.locator('[data-testid="feedback"]').first()).toHaveAttribute('data-correct', 'true');
 

@@ -371,10 +371,10 @@
           React.createElement('input', {
             value: input, onChange: (e) => setInput(e.target.value), placeholder: t.answerPlaceholder,
             className: 'w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:ring-2 focus:ring-sky-400 focus:border-sky-400 text-lg',
-            'data-testid': 'answer-input'
+            'data-testid': 'answer'
           }),
           React.createElement('div', { className: 'mt-3 flex flex-wrap gap-2' },
-            React.createElement('button', { onClick: check, className: 'px-4 py-2 rounded-xl bg-sky-600 text-white hover:bg-sky-700 active:translate-y-px', 'data-testid': 'btn-check' }, t.btnCheck),
+            React.createElement('button', { onClick: check, className: 'px-4 py-2 rounded-xl bg-sky-600 text-white hover:bg-sky-700 active:translate-y-px', 'data-testid': 'check' }, t.btnCheck),
             React.createElement('button', { onClick: next, className: 'px-4 py-2 rounded-xl bg-slate-800 text-white hover:bg-slate-900 active:translate-y-px', 'data-testid': 'btn-next' }, t.btnNext),
             React.createElement('button', { onClick: skip, className: 'px-4 py-2 rounded-xl bg-amber-500 text-white hover:bg-amber-600 active:translate-y-px', 'data-testid': 'btn-skip' }, t.btnSkip)
           ),
@@ -410,7 +410,7 @@
           ))
         ),
         React.createElement('div', { className: 'mt-3 flex flex-wrap gap-2' },
-          React.createElement('button', { onClick: check, className: 'px-4 py-2 rounded-xl bg-sky-600 text-white hover:bg-sky-700 active:translate-y-px', 'data-testid': 'btn-check' }, t.btnCheck),
+          React.createElement('button', { onClick: check, className: 'px-4 py-2 rounded-xl bg-sky-600 text-white hover:bg-sky-700 active:translate-y-px', 'data-testid': 'check' }, t.btnCheck),
           React.createElement('button', { onClick: next, className: 'px-4 py-2 rounded-xl bg-slate-800 text-white hover:bg-slate-900 active:translate-y-px', 'data-testid': 'btn-next' }, t.btnNext),
           React.createElement('button', { onClick: skip, className: 'px-4 py-2 rounded-xl bg-amber-500 text-white hover:bg-amber-600 active:translate-y-px', 'data-testid': 'btn-skip' }, t.btnSkip)
         ),

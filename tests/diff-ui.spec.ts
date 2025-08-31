@@ -37,8 +37,8 @@ async function currentCorrectAnswer(page) {
     wrong = correct + 'x'; // make it wrong if single-char correct
   }
 
-  await page.getByTestId('answer-input').fill(wrong);
-  await page.getByTestId('btn-check').click();
+  await page.getByTestId('answer').fill(wrong);
+  await page.getByTestId('check').click();
 
   const diff = page.getByTestId('diff-feedback');
   await expect(diff).toBeVisible();

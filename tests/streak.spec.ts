@@ -38,8 +38,8 @@ async function currentCorrectAnswer(page) {
 
   for (let i = 1; i <= 10; i++) {
     const answer = await currentCorrectAnswer(page);
-    await page.getByTestId('answer-input').fill(answer);
-    await page.getByTestId('btn-check').click();
+    await page.getByTestId('answer').fill(answer);
+    await page.getByTestId('check').click();
 
     // Streak should update immediately after checking
     await expect(streakEl).toHaveAttribute('data-value', String(i));
@@ -48,14 +48,14 @@ async function currentCorrectAnswer(page) {
     if (i < 10) {
       await expect(page.getByTestId('celebration')).toHaveCount(0);
       // Go to next card for the next correct answer
-      await page.getByTestId('btn-next').click();
+      await page.getByTestId('next').click();
     } else {
       // At 10, celebration toast must appear with correct message
       const toast = page.getByTestId('celebration');
       await expect(toast).toBeVisible();
       await expect(toast).toContainText('Congrats! 10 correct in a row!');
       // After assertion, user still can proceed
-      await page.getByTestId('btn-next').click();
+      await page.getByTestId('next').click();
     }
   }
 });
