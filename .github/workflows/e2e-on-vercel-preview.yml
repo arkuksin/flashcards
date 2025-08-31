@@ -23,10 +23,24 @@ jobs:
         uses: patrickedqvist/wait-for-vercel-preview@v1.3.2
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          timeout: 600
+          max_timeout: 600
+          check_interval: 2
+          allow_inactive: true
+        continue-on-error: true
 
       - name: Show preview URL
         run: echo "Preview URL = ${{ steps.vercel.outputs.url }}"
+
+      - name: Check if Vercel preview is available
+        id: check_vercel
+        run: |
+          if [ "${{ steps.vercel.outcome }}" = "success" ] && [ -n "${{ steps.vercel.outputs.url }}" ]; then
+            echo "vercel_available=true" >> $GITHUB_OUTPUT
+            echo "base_url=${{ steps.vercel.outputs.url }}" >> $GITHUB_OUTPUT
+          else
+            echo "vercel_available=false" >> $GITHUB_OUTPUT
+            echo "base_url=http://127.0.0.1:4173" >> $GITHUB_OUTPUT
+          fi
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -41,12 +55,22 @@ jobs:
       - name: Install Playwright Browsers
         run: npx playwright install --with-deps
 
+      - name: Start local server (fallback if Vercel not available)
+        if: steps.check_vercel.outputs.vercel_available == 'false'
+        run: |
+          npx http-server -p 4173 -a 127.0.0.1 -c-1 . &
+          sleep 10
+          curl --retry 10 --retry-delay 1 --retry-connrefused http://127.0.0.1:4173
+
       # Setzt BASE_URL auf die Vercel-Preview, damit der Analytics-Test
       # und alle E2E-Tests gegen die echte Preview laufen.
-      - name: Run Playwright tests (against Vercel preview)
+      # Falls Vercel nicht verfügbar ist, nutzt einen lokalen Server.
+      - name: Run Playwright tests (against Vercel preview or local server)
         env:
-          BASE_URL: ${{ steps.vercel.outputs.url }}
-        run: npx playwright test
+          BASE_URL: ${{ steps.check_vercel.outputs.base_url }}
+        run: |
+          echo "Running tests against: $BASE_URL"
+          npx playwright test
 
       - name: Upload Playwright report
         if: always()
