@@ -3,6 +3,9 @@ import { defineConfig, devices } from '@playwright/test';
 const DEFAULT_BASE_URL = 'http://127.0.0.1:4173';
 const envBase = process.env.PLAYWRIGHT_BASE_URL || process.env.BASE_URL;
 const baseURL = envBase || DEFAULT_BASE_URL;
+// Hint for IDE/tsserver; Playwright nutzt intern esbuild, aber das hilft IntelliJ:
+process.env.TS_NODE_PROJECT = 'tsconfig.playwright.json';
+
 
 export default defineConfig({
   testDir: 'tests',
