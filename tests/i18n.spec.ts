@@ -101,7 +101,7 @@ const locales = {
     await expect(page.getByTestId('card')).toContainText(t.sourceLabel);
 
     // Input placeholder is translated
-    await expect(page.getByTestId('answer-input')).toHaveAttribute('placeholder', t.placeholder);
+    await expect(page.getByTestId('answer')).toHaveAttribute('placeholder', t.placeholder);
 
     // Strict accents label
     await expect(page.locator('label[for="strict"]')).toHaveText(t.strictLabel);

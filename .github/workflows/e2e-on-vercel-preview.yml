@@ -1,9 +1,7 @@
-name: E2E Tests
+name: E2E on Vercel Preview
 
 on:
   pull_request:
-    branches: [ main ]
-  push:
     branches: [ main ]
 
 permissions:
@@ -11,28 +9,54 @@ permissions:
 
 jobs:
   e2e:
-    name: E2E Tests
     runs-on: ubuntu-latest
+    timeout-minutes: 20
+
     steps:
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - name: Wait for Vercel Preview
+        id: vercel
+        uses: patrickedqvist/wait-for-vercel-preview@v1.3.2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+#          environment: preview
+          max_timeout: 600
+          check_interval: 5
+         #  path: "/?x-vercel-protection-bypass=${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}&x-vercel-set-bypass-cookie=samesitenone"
+
+
+      - name: Show preview URL
+        run: echo "Preview URL = ${{ steps.vercel.outputs.url }}"
+
+      - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: npm
 
       - name: Install dependencies
-        run: npm ci
+        run: npm ci || npm i
 
-      - name: Install Playwright browsers
+      - name: Install Playwright Browsers
         run: npx playwright install --with-deps
 
-      - name: Run Playwright tests
+      - name: Construct bypass URL
+        id: bypass-url
+        run: |
+          BASE_URL="${{ steps.vercel.outputs.url }}"
+          BYPASS_URL="${BASE_URL}/?x-vercel-protection-bypass=${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}&x-vercel-set-bypass-cookie=samesitenone"
+          echo "url=${BYPASS_URL}" >> $GITHUB_OUTPUT
+
+      - name: Run Playwright tests (against Vercel preview)
+        env:
+          BASE_URL: ${{ steps.vercel.outputs.url }}
+          VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
         run: npx playwright test
 
       - name: Upload Playwright report
-        if: failure()
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: playwright-report
