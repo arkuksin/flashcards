@@ -21,9 +21,8 @@ jobs:
         uses: patrickedqvist/wait-for-vercel-preview@v1.3.2
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          max_timeout: 600
-          check_interval: 20
-          vercel_protection_bypass_header: "x-vercel-protection-bypass: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}"
+          max_timeout: 300
+          check_interval: 5
           path: "/?x-vercel-protection-bypass=${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}&x-vercel-set-bypass-cookie=samesitenone"
 
       - name: Show preview URL
