@@ -24,7 +24,7 @@ jobs:
 #          environment: preview
           max_timeout: 600
           check_interval: 5
-          path: "/?x-vercel-protection-bypass=${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}&x-vercel-set-bypass-cookie=samesitenone"
+         #  path: "/?x-vercel-protection-bypass=${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}&x-vercel-set-bypass-cookie=samesitenone"
 
 
       - name: Show preview URL
@@ -41,6 +41,13 @@ jobs:
 
       - name: Install Playwright Browsers
         run: npx playwright install --with-deps
+
+      - name: Construct bypass URL
+        id: bypass-url
+        run: |
+          BASE_URL="${{ steps.vercel.outputs.url }}"
+          BYPASS_URL="${BASE_URL}/?x-vercel-protection-bypass=${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}&x-vercel-set-bypass-cookie=samesitenone"
+          echo "url=${BYPASS_URL}" >> $GITHUB_OUTPUT
 
       - name: Run Playwright tests (against Vercel preview)
         env:
